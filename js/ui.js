@@ -98,6 +98,15 @@ SU.UI = (function () {
     vS.onchange  = () => SU.Audio.play('choice');
     paintAudio();
 
+    /* ---- walk speed ----
+       One button, one job: cycle the preset list in SU.World and show
+       whatever it lands on. The multiplier itself is stored and applied
+       entirely in js/world.js; this is just the label. */
+    const btnSpeed = document.getElementById('btnSpeed');
+    function paintSpeed() { btnSpeed.textContent = SU.World.speedMult + 'x'; }
+    btnSpeed.onclick = () => { SU.World.cycleSpeedMult(); paintSpeed(); };
+    paintSpeed();
+
     SU.bus.on('state:changed', renderHUD);
     SU.bus.on('state:changed', () => { if (!journal.classList.contains('hidden')) renderJournal(); });
     SU.bus.on('zone:changed', renderHUD);

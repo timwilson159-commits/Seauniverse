@@ -23,6 +23,29 @@ SU.World = (function () {
   let onExitTile = false;
   let nearby = null;
 
+  /* ---------- walk speed ----------
+     A device preference, same as the audio volumes: its own localStorage
+     key, not the save file, so it survives a wipe and does not need to
+     be a per-character choice. Affects WALKING ONLY - nothing else
+     (shift clock, animations, quest timers) reads this. */
+  const SPEED_PRESETS = [1, 1.25, 1.5, 0.75];
+  const SPEED_KEY = 'seaUniverse.walkSpeed';
+  let speedMult = loadSpeedMult();
+
+  function loadSpeedMult() {
+    try {
+      const v = parseFloat(localStorage.getItem(SPEED_KEY));
+      return SPEED_PRESETS.indexOf(v) !== -1 ? v : SPEED_PRESETS[0];
+    } catch (e) { return SPEED_PRESETS[0]; }
+  }
+
+  function cycleSpeedMult() {
+    const i = SPEED_PRESETS.indexOf(speedMult);
+    speedMult = SPEED_PRESETS[(i + 1) % SPEED_PRESETS.length];
+    try { localStorage.setItem(SPEED_KEY, String(speedMult)); } catch (e) {}
+    return speedMult;
+  }
+
   /* ---------- deterministic noise, so scenery never shimmers ---------- */
   function hash(x, y) {
     let h = (x | 0) * 374761393 + (y | 0) * 668265263;
@@ -160,7 +183,7 @@ SU.World = (function () {
 
     if (dx || dy) {
       const len = Math.hypot(dx, dy) || 1;
-      const speed = C.player.baseSpeed + (SU.State.data.level - 1) * C.player.speedPerLevel;
+      const speed = (C.player.baseSpeed + (SU.State.data.level - 1) * C.player.speedPerLevel) * speedMult;
       const s = speed * dt;
       const nx = p.x + (dx / len) * s;
       const ny = p.y + (dy / len) * s;
@@ -806,8 +829,10 @@ SU.World = (function () {
   return {
     loadZone, update, draw, interact,
     isBlocked, solidAt, tileAt, refreshProps,
+    cycleSpeedMult,
     get zone() { return zone; },
     get zoneId() { return zoneId; },
-    get nearby() { return nearby; }
+    get nearby() { return nearby; },
+    get speedMult() { return speedMult; }
   };
 })();
