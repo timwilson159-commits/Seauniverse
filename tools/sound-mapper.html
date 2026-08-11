@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sea Universe: Sound Mapper</title>
+<style>
+  :root{
+    --bg:#0e141a; --panel:#151d25; --panel-2:#1b2530; --line:#2a3642;
+    --text:#dfe7ee; --muted:#8ea0b0; --accent:#4fc3a1; --accent-2:#6fd18a; --warn:#e0a34a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:5;background:var(--panel);
+         border-bottom:1px solid var(--line);padding:12px 18px}
+  .hrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{margin:0;font-size:18px}
+  .stats{color:var(--muted);font-size:13px}
+  .spacer{flex:1}
+  button{background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+         border-radius:7px;padding:7px 12px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#06231c;border-color:var(--accent);font-weight:600}
+  button:disabled{opacity:.4;cursor:default}
+  input[type=text]{background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+         border-radius:7px;padding:7px 10px;font-size:13px;width:100%}
+
+  main{display:grid;grid-template-columns:1fr 380px;gap:16px;padding:16px 18px;align-items:start}
+  @media (max-width:1000px){ main{grid-template-columns:1fr} }
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  h2.sec{margin:20px 0 8px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+  h2.sec:first-child{margin-top:0}
+
+  .ev{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+      background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+      padding:10px 12px;margin-bottom:7px;cursor:pointer}
+  .ev:hover{border-color:var(--accent)}
+  .ev.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .ev.has{border-left:3px solid var(--accent-2)}
+  .ev-name{font-weight:600}
+  .ev-when{color:var(--muted);font-size:12px;margin-top:2px}
+  .ev-file{color:var(--accent-2);font-size:12px;margin-top:4px;font-family:ui-monospace,monospace}
+  .ev-none{color:var(--warn);font-size:12px;margin-top:4px;font-style:italic}
+  .ev-tools{display:flex;gap:6px;align-items:center}
+
+  .pool{position:sticky;top:74px}
+  .pool-list{max-height:60vh;overflow-y:auto;margin-top:10px}
+  .snd{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;
+       border:1px solid transparent;font-family:ui-monospace,monospace;font-size:12px}
+  .snd:hover{background:var(--panel-2);border-color:var(--line)}
+  .snd .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .snd.used{opacity:.45}
+  .snd.used .nm::after{content:' (assigned)';color:var(--muted)}
+  .play{padding:3px 8px;font-size:12px;min-width:30px}
+  .assign{padding:3px 9px;font-size:12px}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;
+         align-items:center;justify-content:center;padding:24px;z-index:20}
+  .modal.hidden{display:none}
+  .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+              padding:18px;width:820px;max-width:100%;max-height:88vh;display:flex;flex-direction:column}
+  textarea{flex:1;min-height:340px;background:#0b1016;color:var(--text);border:1px solid var(--line);
+           border-radius:8px;padding:12px;font-family:ui-monospace,monospace;font-size:12px;resize:vertical}
+  .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- the event catalogue, and the list of files sitting in Unassigned/FX -->
+<script>window.SU = window.SU || {}; SU.data = SU.data || {};</script>
+<script src="../data/audio.js"></script>
+<script src="../Sounds/fx-manifest.js"></script>
+
+<header>
+  <div class="hrow">
+    <h1>🔊 Sound Mapper</h1>
+    <div class="stats" id="stats">Loading…</div>
+    <div class="spacer"></div>
+    <button id="btnStop">Stop</button>
+    <button id="btnAdd">Add files…</button>
+    <input id="filePick" type="file" accept="audio/*" multiple hidden>
+    <button id="btnClear">Clear all</button>
+    <button class="primary" id="btnGen">Generate rename list</button>
+  </div>
+  <p class="hint">Click an event on the left, then press <b>Assign</b> next to a sound on the right.
+     ▶ previews without assigning. Everything is remembered in this browser until you generate the list.</p>
+</header>
+
+<main>
+  <div id="events"></div>
+
+  <div class="card pool">
+    <div class="hrow">
+      <strong>Sound pool</strong>
+      <div class="spacer"></div>
+      <span class="stats" id="poolCount"></span>
+    </div>
+    <input id="search" type="text" placeholder="Filter by name… (try CRY, ITEM, MENU)">
+    <div class="pool-list" id="poolList"></div>
+    <p class="hint" id="selNote">No event selected.</p>
+  </div>
+</main>
+
+<div class="modal hidden" id="modal">
+  <div class="box">
+    <div class="hrow"><strong>Paste this to Claude</strong><div class="spacer"></div>
+      <span class="stats" id="copyNote"></span></div>
+    <textarea id="out" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="primary" id="btnCopy">Copy to clipboard</button>
+      <button id="btnCloseModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FX_DIR = '../Sounds/Unassigned/FX/';
+const LSKEY  = 'su_sound_mapper_v1';
+
+const EVENTS = SU.data.sfxEvents || [];
+let POOL = (window.SU_FX_POOL || []).slice();
+const extra = {};                       // files added by the picker: name -> objectURL
+
+let map = {};                           // eventId -> filename
+let selected = null;
+let audio = new Audio();
+
+try { map = JSON.parse(localStorage.getItem(LSKEY)) || {}; } catch(e){ map = {}; }
+function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(map)); }catch(e){} }
+
+function urlFor(file){ return extra[file] || (FX_DIR + file); }
+
+function preview(file){
+  try { audio.pause(); } catch(e){}
+  audio = new Audio(urlFor(file));
+  audio.volume = 0.8;
+  audio.play().catch(()=>{
+    alert('Could not play ' + file + '.\n\nIf you opened this file directly from disk, some browsers ' +
+          'block local audio. Serve the folder instead:\n\n  powershell -ExecutionPolicy Bypass -File serve.ps1\n\n' +
+          'then open http://localhost:8123/tools/sound-mapper.html');
+  });
+}
+function stopAll(){ try{ audio.pause(); }catch(e){} }
+
+const usedFiles = () => new Set(Object.values(map));
+
+/* ---------- events ---------- */
+function renderEvents(){
+  const host = document.getElementById('events');
+  const groups = [];
+  EVENTS.forEach(e => { if (!groups.includes(e.group)) groups.push(e.group); });
+
+  host.innerHTML = groups.map(g => {
+    const rows = EVENTS.filter(e => e.group === g).map(e => {
+      const f = map[e.id];
+      return '<div class="ev' + (f ? ' has' : '') + (selected === e.id ? ' sel' : '') +
+             '" data-ev="' + e.id + '">' +
+        '<div>' +
+          '<div class="ev-name">' + e.label + '</div>' +
+          '<div class="ev-when">' + e.when + '</div>' +
+          (f ? '<div class="ev-file">' + f + '</div>'
+             : '<div class="ev-none">no sound assigned, this event is silent</div>') +
+        '</div>' +
+        '<div class="ev-tools">' +
+          (f ? '<button class="play" data-play="' + f + '">▶</button>' +
+               '<button class="assign" data-clear="' + e.id + '">✕</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+    return '<h2 class="sec">' + g + '</h2><div class="card">' + rows + '</div>';
+  }).join('');
+
+  host.querySelectorAll('[data-ev]').forEach(el => el.onclick = ev => {
+    if (ev.target.closest('[data-play]') || ev.target.closest('[data-clear]')) return;
+    selected = el.dataset.ev;
+    renderEvents(); renderPool(); renderStats();
+  });
+  host.querySelectorAll('[data-play]').forEach(b => b.onclick = e => { e.stopPropagation(); preview(b.dataset.play); });
+  host.querySelectorAll('[data-clear]').forEach(b => b.onclick = e => {
+    e.stopPropagation(); delete map[b.dataset.clear]; save(); renderEvents(); renderPool(); renderStats();
+  });
+}
+
+/* ---------- pool ---------- */
+function renderPool(){
+  const q = (document.getElementById('search').value || '').trim().toUpperCase();
+  const used = usedFiles();
+  const list = POOL.filter(f => !q || f.toUpperCase().includes(q));
+  document.getElementById('poolCount').textContent = list.length + ' of ' + POOL.length;
+
+  const sel = EVENTS.find(e => e.id === selected);
+  document.getElementById('selNote').innerHTML = sel
+    ? 'Assigning to: <b>' + sel.label + '</b>'
+    : 'No event selected. Click one on the left first.';
+
+  document.getElementById('poolList').innerHTML = list.map(f =>
+    '<div class="snd' + (used.has(f) ? ' used' : '') + '">' +
+      '<button class="play" data-p="' + f + '">▶</button>' +
+      '<span class="nm">' + f.replace(/\.mp3$/i,'') + '</span>' +
+      '<button class="assign" data-a="' + f + '"' + (selected ? '' : ' disabled') + '>Assign</button>' +
+    '</div>').join('') || '<p class="hint">Nothing matches that filter.</p>';
+
+  document.getElementById('poolList').querySelectorAll('[data-p]').forEach(b =>
+    b.onclick = () => preview(b.dataset.p));
+  document.getElementById('poolList').querySelectorAll('[data-a]').forEach(b =>
+    b.onclick = () => {
+      if (!selected) return;
+      map[selected] = b.dataset.a;
+      save();
+      /* jump to the next unassigned event, so a long assigning session
+         does not need a click back to the left column every time */
+      const i = EVENTS.findIndex(e => e.id === selected);
+      const nxt = EVENTS.slice(i+1).find(e => !map[e.id]) || EVENTS.find(e => !map[e.id]);
+      selected = nxt ? nxt.id : null;
+      renderEvents(); renderPool(); renderStats();
+    });
+}
+
+function renderStats(){
+  const done = EVENTS.filter(e => map[e.id]).length;
+  document.getElementById('stats').textContent =
+    done + '/' + EVENTS.length + ' events have a sound · ' +
+    (POOL.length - usedFiles().size) + ' of ' + POOL.length + ' files unused';
+}
+
+/* ---------- output ---------- */
+function buildPrompt(){
+  const rows = EVENTS.filter(e => map[e.id]).map(e => ({
+    from: 'Sounds/Unassigned/FX/' + map[e.id],
+    to:   'Sounds/sfx_' + e.id + '.mp3',
+    who:  e.label
+  }));
+  if (!rows.length) return 'Nothing assigned yet.';
+
+  const w = Math.max.apply(null, rows.map(r => r.from.length));
+  const body = rows.map(r => '  ' + r.from.padEnd(w) + '  ->  ' + r.to + '   # ' + r.who).join('\n');
+  const left = EVENTS.filter(e => !map[e.id]);
+
+  /* Two files assigned to the same source would be a copy, not a move,
+     so say so explicitly rather than letting it fail halfway. */
+  const counts = {};
+  rows.forEach(r => counts[r.from] = (counts[r.from]||0) + 1);
+  const dupes = Object.keys(counts).filter(k => counts[k] > 1);
+
+  return [
+    'Rename my Sea Universe sound files. In C:\\Users\\timwi\\Downloads\\Claude\\sea-universe\\,',
+    'move each file on the left to the path on the right:',
+    '', body, '',
+    'Rules:',
+    '  - Move them out of Sounds/Unassigned/FX/ into Sounds/, and do not leave copies behind.',
+    '  - Keep the .mp3 extension exactly as-is.',
+    '  - Any file in Sounds/Unassigned/FX/ not listed above stays where it is.',
+    '  - Nothing here overwrites existing sound.',
+    dupes.length
+      ? '  - NOTE: these sources are used more than once, so they need copying rather than moving: ' +
+        dupes.join(', ')
+      : null,
+    '',
+    'Then register them in data/audio.js (SU.data.sfxMap) and tell me if any sound failed to load.',
+    left.length
+      ? '\nStill unassigned after this: ' + left.map(e => e.label).join(', ') + '.'
+      : '\nThat covers every event in the game.'
+  ].filter(x => x !== null).join('\n');
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('search').oninput = renderPool;
+document.getElementById('btnStop').onclick = stopAll;
+document.getElementById('btnGen').onclick = () => {
+  document.getElementById('out').value = buildPrompt();
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('out').select();
+};
+document.getElementById('btnCloseModal').onclick = () => document.getElementById('modal').classList.add('hidden');
+document.getElementById('btnCopy').onclick = async () => {
+  const ta = document.getElementById('out'); ta.select();
+  try { await navigator.clipboard.writeText(ta.value); } catch(e) { document.execCommand('copy'); }
+  document.getElementById('copyNote').textContent = 'Copied.';
+  setTimeout(() => document.getElementById('copyNote').textContent = '', 2000);
+};
+document.getElementById('btnClear').onclick = () => {
+  const n = Object.keys(map).length;
+  if (!n) return;
+  if (!confirm('Clear all ' + n + ' assignments?')) return;
+  map = {}; save(); renderEvents(); renderPool(); renderStats();
+};
+document.getElementById('btnAdd').onclick = () => document.getElementById('filePick').click();
+document.getElementById('filePick').onchange = e => {
+  [...e.target.files].forEach(f => {
+    if (!POOL.includes(f.name)) POOL.push(f.name);
+    extra[f.name] = URL.createObjectURL(f);
+  });
+  POOL.sort();
+  renderPool(); renderStats();
+};
+
+selected = (EVENTS.find(e => !map[e.id]) || EVENTS[0] || {}).id || null;
+renderEvents(); renderPool(); renderStats();
+</script>
+</body>
+</html>

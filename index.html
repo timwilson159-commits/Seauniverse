@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sea Universe</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header id="hud"></header>
+
+  <div id="stage">
+    <canvas id="view"></canvas>
+    <div id="chores" class="hidden"></div>
+    <div id="prompt" class="hidden"></div>
+    <div id="toasts"></div>
+    <div id="awards"></div>
+    <div id="pauseVeil" class="hidden"><div class="pause-card">
+      <strong>Paused</strong>
+      <button id="btnResume" class="primary">Resume</button>
+    </div></div>
+    <div id="devReport" class="hidden"></div>
+  </div>
+
+  <footer id="controls">
+    <button id="btnJournal">Menu <kbd>M</kbd></button>
+    <button id="btnRest">End shift</button>
+    <button id="btnSave">Save</button>
+    <button id="btnPause" title="Pause the game">Pause <kbd>P</kbd></button>
+    <button id="btnFull" title="Fullscreen">⛶</button>
+
+    <!-- audio: each button toggles, each slider sets the level -->
+    <div class="audio-ctl">
+      <button id="btnMusic" class="aud" title="Music on/off">♪</button>
+      <input id="volMusic" class="vol" type="range" min="0" max="100" step="1" aria-label="Music volume">
+      <button id="btnSfx" class="aud" title="Sound effects on/off">🔊</button>
+      <input id="volSfx" class="vol" type="range" min="0" max="100" step="1" aria-label="Sound effects volume">
+    </div>
+
+    <span class="hint">WASD / arrows to move · <kbd>E</kbd> interact · <kbd>Esc</kbd> close</span>
+  </footer>
+
+</div>
+
+<!-- ===== title ===== -->
+<div id="title" class="modal hidden">
+  <div class="title-box">
+    <h1>SEA UNIVERSE</h1>
+    <p class="tagline">A conservation organisation that happens to sell ice creams.</p>
+    <p class="blurb">You are the newest trainer at the park. You are also the only person here who came for the animals.</p>
+    <div class="title-btns" id="titleBtns">
+      <button id="btnContinue" class="primary">Continue</button>
+      <button id="btnNew">New game</button>
+    </div>
+
+    <!-- character select: shown after New game, before the world loads -->
+    <div id="charSelect" class="hidden">
+      <h2 class="cs-head">Sign in for your first shift</h2>
+      <label class="cs-label" for="csName">Your name</label>
+      <input id="csName" type="text" maxlength="18" placeholder="Trainer" autocomplete="off" spellcheck="false">
+      <p class="cs-note" id="csNameNote">You can change this later in the Menu.</p>
+
+      <label class="cs-label">Your trainer</label>
+      <div class="cs-sprites" id="csSprites"></div>
+
+      <div class="title-btns">
+        <button id="btnBegin" class="primary">Begin</button>
+        <button id="btnBack">Back</button>
+      </div>
+    </div>
+
+    <p class="version">progress saves to this browser</p>
+  </div>
+</div>
+
+<!-- ===== dialogue ===== -->
+<div id="dialogue" class="modal hidden">
+  <div class="dlg-wrap">
+    <div class="dlg-portrait hidden" id="dlgPortrait"><img id="dlgPortraitImg" alt=""></div>
+    <div class="dlg-box">
+      <div class="dlg-name" id="dlgName"></div>
+      <div class="dlg-text" id="dlgText"></div>
+      <div class="dlg-choices" id="dlgChoices"></div>
+      <div class="dlg-footer">
+        <div class="dlg-hint" id="dlgHint"></div>
+        <div class="dlg-page" id="dlgPage"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== care session ===== -->
+<div id="care" class="modal hidden">
+  <div class="care-box" id="careBody"></div>
+</div>
+
+<!-- ===== journal ===== -->
+<div id="journal" class="modal hidden">
+  <div class="journal-box">
+    <nav id="journalTabs" class="tabs">
+      <!-- Order set by the user 2026-08-05: what you are doing now first,
+           what you are carrying next, then the reference material, with
+           the read-only summary last. Species sits beside Notebook
+           because both are logs you fill in. -->
+      <button data-tab="tasks" class="on">Tasks</button>
+      <button data-tab="bag">Bag</button>
+      <button data-tab="skills">Skills</button>
+      <button data-tab="transit">Travel</button>
+      <button data-tab="notebook">Notebook</button>
+      <button data-tab="dex">Species</button>
+      <button data-tab="awards">Awards</button>
+      <button data-tab="summary">Summary</button>
+      <button id="journalClose" class="close">✕</button>
+    </nav>
+    <div id="journalBody" class="panel-body"></div>
+  </div>
+</div>
+
+<!-- ===== shop ===== -->
+<div id="shop" class="modal hidden">
+  <div class="journal-box">
+    <nav class="tabs"><span class="shop-title">Shop</span><button id="shopClose" class="close">✕</button></nav>
+    <div id="shopBody" class="panel-body"></div>
+  </div>
+</div>
+
+<!-- ===== keypad (coded doors) ===== -->
+<div id="keypad" class="modal hidden">
+  <div class="keypad-box">
+    <nav class="tabs"><span class="shop-title" id="keypadTitle">Keypad</span><button id="keypadClose" class="close">✕</button></nav>
+    <div class="panel-body">
+      <p class="muted" id="keypadText"></p>
+      <div class="keypad-clue" id="keypadClue"></div>
+      <div class="keypad-display" id="keypadDisplay"></div>
+      <div class="keypad-msg" id="keypadMsg"></div>
+      <div class="keypad-grid" id="keypadGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== the hearing (endgame) ===== -->
+<div id="hearing" class="modal hidden">
+  <div class="hearing-box" id="hearingBody"></div>
+</div>
+
+<!-- ===== arcade: AQUAWORD (whole panel is rendered by js/arcade_aquaword.js) ===== -->
+<div id="aquaword" class="modal hidden"></div>
+
+<!-- ===== arcade: MATCH THE POD (rendered by js/arcade_matchpod.js) ===== -->
+<div id="matchpod" class="modal hidden"></div>
+
+<!-- ===== arcade: BIGGER OR SMALLER (rendered by js/arcade_bigger.js) ===== -->
+<div id="bigger" class="modal hidden"></div>
+
+<!-- ===== arcade: OCEAN CONNECTIONS (rendered by js/arcade_connections.js) ===== -->
+<div id="connections" class="modal hidden"></div>
+
+<!-- ===== arcade: SORTING STATION (rendered by js/arcade_sorting.js) ===== -->
+<div id="sorting" class="modal hidden"></div>
+
+<!-- ===== arcade: RESCUE! (rendered by js/arcade_rescue.js) ===== -->
+<div id="rescue" class="modal hidden"></div>
+
+<!-- ===== end of game report + certificate ===== -->
+<div id="report" class="modal hidden">
+  <div class="report-box" id="reportBody"></div>
+</div>
+
+<!-- ===== staff transit (fast travel) ===== -->
+<div id="transit" class="modal hidden">
+  <div class="journal-box">
+    <nav class="tabs"><span class="shop-title">🚇 Staff Transit</span><button id="transitClose" class="close">✕</button></nav>
+    <div id="transitBody" class="panel-body"></div>
+  </div>
+</div>
+
+<!-- ===== data (edit these to add content) ===== -->
+<script src="data/config.js"></script>
+<script src="data/audio.js"></script>
+<script src="data/items.js"></script>
+<script src="data/species.js"></script>
+<script src="data/species_deep.js"></script>
+<script src="data/progression.js"></script>
+<script src="data/progression_deep.js"></script>
+<script src="data/progression_end.js"></script>
+<script src="data/zones.js"></script>
+<script src="data/zone_arctic.js"></script>
+<script src="data/zone_ocean.js"></script>
+<script src="data/zone_deep.js"></script>
+<script src="data/zone_end.js"></script>
+<!-- Building name plaques. AFTER every zone file: it pushes a rect and a
+     sign into the five region maps rather than editing them. -->
+<script src="data/plaques.js"></script>
+<!-- Arcade machines. Also after the zone files: one object per interior. -->
+<script src="data/arcade.js"></script>
+<script src="data/arcade_aquaword.js"></script>
+<script src="data/arcade_bigger.js"></script>
+<script src="data/arcade_connections.js"></script>
+<script src="data/arcade_rescue.js"></script>
+<script src="data/npcs.js"></script>
+<script src="data/npcs_arctic.js"></script>
+<script src="data/npcs_ocean.js"></script>
+<script src="data/npcs_deep.js"></script>
+<script src="data/npcs_end.js"></script>
+<script src="data/quests.js"></script>
+<script src="data/quests_arctic.js"></script>
+<script src="data/quests_ocean.js"></script>
+<script src="data/quests_deep.js"></script>
+<script src="data/quests_end.js"></script>
+<!-- Kayla loads AFTER every cast file: she hoists her questions onto
+     the front of other characters' dialogue lists at load time. -->
+<script src="data/quests_kayla.js"></script>
+<script src="data/npcs_kayla.js"></script>
+<script src="data/quests_side.js"></script>
+<script src="data/npcs_side.js"></script>
+<!-- Post-prosecution Barry. Must be last of all: it closes the spawn
+     gates on the five original Barrys defined in the cast files above. -->
+<script src="data/npcs_barry_sad.js"></script>
+<script src="data/duties.js"></script>
+<script src="data/talks.js"></script>
+
+<!-- ===== engine ===== -->
+<script src="js/state.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/quests.js"></script>
+<script src="js/duties.js"></script>
+<script src="js/dialogue.js"></script>
+<script src="js/care.js"></script>
+<script src="js/hearing.js"></script>
+<script src="js/report.js"></script>
+<!-- Arcade shell (the cabinet). Each minigame lands as its own
+     js/arcade_<id>.js loaded after this and registers itself. -->
+<script src="js/arcade.js"></script>
+<script src="js/arcade_aquaword.js"></script>
+<script src="js/arcade_matchpod.js"></script>
+<script src="js/arcade_bigger.js"></script>
+<script src="js/arcade_connections.js"></script>
+<script src="js/arcade_sorting.js"></script>
+<script src="js/arcade_rescue.js"></script>
+<script src="js/interact.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/world.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

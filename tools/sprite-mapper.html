@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sea Universe: Sprite Mapper</title>
+<style>
+  :root{
+    --bg:#0f1b22; --panel:#16262f; --panel2:#1c2f3a; --line:#2b4552;
+    --ink:#e8f1f4; --muted:#8fa9b5; --blue:#3d92bc; --gold:#e0a34a;
+    --green:#4f9d69; --red:#c85a5a; --purple:#a07ac0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+
+  header{
+    position:sticky; top:0; z-index:20; background:var(--panel);
+    border-bottom:1px solid var(--line); padding:11px 18px 0;
+  }
+  .hrow{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding-bottom:10px}
+  header h1{margin:0; font-size:17px; letter-spacing:.04em; white-space:nowrap}
+  .stats{color:var(--muted); font-size:12.5px}
+  .stats b{color:var(--ink)}
+  .spacer{flex:1}
+  button{
+    background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    padding:7px 13px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit;
+  }
+  button:hover:not(:disabled){border-color:var(--blue)}
+  button.primary{background:var(--blue); border-color:var(--blue); color:#06181f; font-weight:600}
+  button.danger:hover{border-color:var(--red)}
+
+  /* tabs */
+  .tabs{display:flex; gap:2px}
+  .tab{
+    background:transparent; border:1px solid transparent; border-bottom:none;
+    border-radius:7px 7px 0 0; padding:9px 18px; cursor:pointer; color:var(--muted);
+    font-size:13.5px; font-family:inherit; position:relative; top:1px;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab.on{background:var(--bg); border-color:var(--line); color:var(--ink); font-weight:600}
+  .tab .cnt{font-size:11px; color:var(--muted); margin-left:7px; font-weight:400}
+  .tab.on .cnt{color:var(--gold)}
+  .tab .pfx{
+    display:inline-block; font:11px/1 Consolas,monospace; background:var(--panel2);
+    border:1px solid var(--line); border-radius:3px; padding:2px 5px; margin-left:7px; color:var(--muted);
+  }
+
+  main{display:grid; grid-template-columns:1fr 340px; gap:18px; padding:18px; align-items:start}
+  @media (max-width:1100px){ main{grid-template-columns:1fr} }
+
+  h2.sec{
+    font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold);
+    margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line);
+  }
+  h2.sec:first-child{margin-top:0}
+  h2.sec span{color:var(--muted); text-transform:none; letter-spacing:0; font-size:12px; margin-left:8px}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:12px}
+
+  .t{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:11px; display:flex; gap:11px; cursor:pointer; transition:border-color .12s;
+  }
+  .t:hover{border-color:#3f6478}
+  .t.sel{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold)}
+  .t.alias{opacity:.62; cursor:default}
+  .t.alias:hover{border-color:var(--line)}
+
+  .thumb{
+    width:64px; flex:none; border-radius:5px; border:1px dashed var(--line);
+    background:var(--panel2); display:flex; align-items:center; justify-content:center;
+    color:var(--muted); font-size:10px; text-align:center; overflow:hidden;
+  }
+  .thumb img{width:100%; height:100%; object-fit:contain; display:block}
+  .thumb.filled{border-style:solid; border-color:var(--green)}
+  .thumb.existing{border-style:solid; border-color:var(--blue)}
+
+  .meta{min-width:0; flex:1}
+  .nm{font-weight:600; font-size:14.5px}
+  .rl{color:var(--blue); font-size:12px}
+  .zn{color:var(--muted); font-size:11.5px; margin-bottom:5px}
+  .ds{color:#bed0d8; font-size:11.5px; line-height:1.42; max-height:4.3em; overflow:hidden}
+  .t.sel .ds{max-height:none}
+  .chip{
+    display:inline-block; font-size:10px; padding:1px 6px; border-radius:99px;
+    margin-top:6px; margin-right:5px; border:1px solid var(--line); color:var(--muted);
+  }
+  .chip.ok{border-color:var(--green); color:#8fd6a6}
+  .chip.has{border-color:var(--blue); color:#8fc9e0}
+  .chip.act{border-color:var(--gold); color:var(--gold)}
+  .chip.bad{border-color:var(--red); color:#f0a0a0}
+
+  aside{position:sticky; top:112px}
+  .pool{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px}
+  .pool h3{margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--gold)}
+  .hint{color:var(--muted); font-size:11.5px; margin:0 0 10px}
+  .hint b{color:var(--ink)}
+  label.tog{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted); margin-bottom:10px; cursor:pointer}
+
+  .pgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; max-height:62vh; overflow:auto}
+  .pit{border:1px solid var(--line); border-radius:5px; background:var(--panel2); padding:3px; cursor:pointer; text-align:center; transition:border-color .12s}
+  .pit:hover{border-color:var(--gold)}
+  .pit img{width:100%; object-fit:contain; display:block; max-height:96px}
+  .pit .fn{font-size:10px; color:var(--muted); margin-top:2px}
+  .pit.dim{opacity:.32}
+
+  button.on{background:var(--gold); border-color:var(--gold); color:#06181f; font-weight:600}
+  button.wide{width:100%; margin-top:10px}
+
+  /* still-to-generate list */
+  aside{display:flex; flex-direction:column; gap:14px; max-height:calc(100vh - 128px); overflow:auto}
+  .pool.todo .todo-list{max-height:46vh; overflow:auto; margin-bottom:2px}
+  .todo-item{
+    padding:7px 0; border-top:1px solid var(--line);
+    font-size:11.5px; line-height:1.45; color:#c3d4dc;
+  }
+  .todo-item:first-child{border-top:none}
+
+  .modal{position:fixed; inset:0; background:rgba(4,12,17,.86); z-index:50; display:flex; align-items:center; justify-content:center; padding:24px}
+  .modal.hidden{display:none}
+  .mbox{background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:18px; max-width:820px; width:100%; max-height:86vh; display:flex; flex-direction:column}
+  .mbox h3{margin:0 0 8px; font-size:15px}
+  textarea{flex:1; min-height:340px; width:100%; background:#0b161c; color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:11px; font:12px/1.5 Consolas,monospace; resize:vertical}
+  .mrow{display:flex; gap:9px; margin-top:11px; align-items:center}
+  .warn{background:#3a2418; border:1px solid #7a4a2a; color:#f0c49a; padding:9px 12px; border-radius:6px; font-size:12.5px; margin:0 18px}
+</style>
+</head>
+<body>
+
+<!-- Game data. Classic scripts, so this works opened straight off disk. -->
+<script>window.SU = window.SU || {}; SU.data = SU.data || {};</script>
+<script src="../data/npcs.js"></script>
+<script src="../data/species.js"></script>
+<script src="../data/zones.js"></script>
+<!-- Per-zone files from Zone 3 onward. ADD EACH NEW ONE HERE or its
+     content is simply missing from this tool with no error: The Deep was
+     invisible here for exactly that reason.
+
+     Zone 5 also moved SPECIES into its own file, so that needs listing
+     too now: the old note below said species arrived on their own,
+     which stopped being true. Props and progression are still appended
+     to the base files by the zone files themselves. -->
+<script src="../data/zone_arctic.js"></script>
+<script src="../data/npcs_arctic.js"></script>
+<script src="../data/zone_ocean.js"></script>
+<script src="../data/npcs_ocean.js"></script>
+<script src="../data/species_deep.js"></script>
+<script src="../data/zone_deep.js"></script>
+<script src="../data/npcs_deep.js"></script>
+<script src="../data/zone_end.js"></script>
+<script src="../data/npcs_end.js"></script>
+<!-- Casts that are not tied to one zone. These two files HOIST dialogue
+     onto characters above and PUSH objects into zones above, so they must
+     stay last, exactly as they are in index.html. Without them this tool
+     showed no Kayla and none of the eight side quest visitors. -->
+<script src="../data/npcs_kayla.js"></script>
+<script src="../data/npcs_side.js"></script>
+<script src="../data/npcs_barry_sad.js"></script>
+
+<header>
+  <div class="hrow">
+    <h1>🐬 Sprite Mapper</h1>
+    <div class="stats" id="stats">Loading…</div>
+    <div class="spacer"></div>
+    <button id="btnHideDone">Hide completed</button>
+    <button id="btnAdd">Add files…</button>
+    <button id="btnClear" class="danger">Clear all</button>
+    <button id="btnGen" class="primary">Generate rename prompt</button>
+    <input type="file" id="filePick" accept=".svg,.png,.webp" multiple hidden>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<div id="loadWarn"></div>
+
+<main>
+  <section id="targets"></section>
+
+  <aside>
+    <div class="pool">
+      <h3>Unassigned pool</h3>
+      <p class="hint" id="poolCount"></p>
+      <p class="hint">Click something on the left, then click an image here.
+        Click an assigned thumbnail to free it again.</p>
+      <label class="tog"><input type="checkbox" id="togAll">
+        Show every pool file, ignoring the prefix</label>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+
+    <div class="pool todo">
+      <h3>Still to generate</h3>
+      <p class="hint" id="todoCount"></p>
+      <div class="todo-list" id="todoList"></div>
+      <button id="btnCopyTodo" class="wide">Copy list</button>
+    </div>
+  </aside>
+</main>
+
+<div class="modal hidden" id="modal">
+  <div class="mbox">
+    <h3>Copy this and paste it back into Claude Code</h3>
+    <p class="hint">Nothing on disk has changed yet. Claude does the renaming.</p>
+    <textarea id="out" spellcheck="false"></textarea>
+    <div class="mrow">
+      <button class="primary" id="btnCopy">Copy to clipboard</button>
+      <button id="btnClose">Close</button>
+      <span class="stats" id="copyNote"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const POOL_DIR = '../sprites/Unassigned/';
+const ART_DIR  = '../sprites/';
+const LSKEY    = 'su_sprite_mapper_v2';
+const OLDKEY   = 'su_sprite_mapper_v1';
+
+/* ------------------------------------------------------------------
+   FILENAME PREFIX CONVENTION (the user's naming scheme)
+     A…  animals      P…  props      E…  park employees
+     plain number …   general characters (visitors, contacts, outsiders)
+   ------------------------------------------------------------------ */
+const PREFIXES = [
+  { key:'animal',    re:/^A\d/i, label:'A' },
+  { key:'prop',      re:/^P\d/i, label:'P' },
+  { key:'tile',      re:/^T\d/i, label:'T' },
+  { key:'employee',  re:/^E\d/i, label:'E' },
+  { key:'character', re:/^\d/,   label:'1-9' }
+];
+function poolGroup(file){
+  const hit = PREFIXES.find(p => p.re.test(file));
+  return hit ? hit.key : 'character';
+}
+
+const TABS = [
+  { id:'characters', label:'Characters', noun:'character', prefix:'E… + 1-9', accepts:['employee','character'] },
+  { id:'animals',    label:'Animals',    noun:'animal',    prefix:'A…',       accepts:['animal'] },
+  { id:'props',      label:'Props',      noun:'prop',      prefix:'P…',       accepts:['prop'] },
+  { id:'tiles',      label:'Tiles',      noun:'tile',      prefix:'T…',       accepts:['tile'] }
+];
+
+/* Roles NOT on the park payroll. Anything else counts as staff, so NPCs
+   added for zones 3-5 classify themselves with no edit here. */
+const OUTSIDER = /visitor|handler|subversive|campaign|activist|journalist/i;
+
+/* ------------------------------------------------------------------
+   Briefs lifted from sprites/README.md so the descriptions here are the
+   same text that generated the art. `r` is the recommended width:height
+   ratio, the one thing that actually breaks a sprite if it is wrong.
+   ------------------------------------------------------------------ */
+const NPC_BRIEF = {
+  dana:    'A woman in her forties, senior marine mammal trainer, weathered and capable, sun-faded orange-tan work polo, whistle on a cord, hair tied back tightly.',
+  milo:    'A young man in his twenties, junior trainer, teal staff polo, wetsuit tied around the waist by its sleeves, cheerful open posture, messy dark hair.',
+  wren:    'A woman in her fifties in casual visitor clothes deliberately blending in: wide-brimmed sun hat, pale green shirt, tote bag over one shoulder, watchful expression.',
+  sable:   'A woman in her thirties, animal rights campaigner, purple-pink jacket, holding a small stack of leaflets, determined expression.',
+  ollie:   'An excited boy about nine years old, bright yellow t-shirt, shorts, small backpack, arms mid-gesture as if talking fast.',
+  nan:     'An elderly woman visitor, dusty rose cardigan, sensible shoes, handbag held in front with both hands, warm smile, slightly stooped.',
+  barry:   'A tall confident man in his fifties, theme park CEO, expensive navy blazer over an open-collar shirt, hands clasped behind his back, polished salesman smile that does not reach the eyes.',
+  priya:   'A woman in her late thirties, head dolphin trainer, navy wetsuit top over board shorts, whistle and stopwatch on a lanyard, hair in a tight bun, arms folded, confident and unsmiling.',
+  margo:   'A polished woman in her forties, corporate guest experience manager, tailored plum blazer over a park-branded blouse, tablet held against her chest, professional fixed smile.',
+  ibrahim: 'A dignified man in his seventies, volunteer guide, pale blue volunteer polo with a name badge, wide-brimmed sun hat, walking stick in one hand, warm and unhurried.',
+  jarrah:  'A young man in his twenties, aquarist and diver, black wetsuit peeled to the waist with the sleeves knotted, one dive glove on and one hand bare, wet hair, grinning.',
+  dessie:  'A woman in her fifties, schoolteacher on an excursion, sensible green cardigan and lanyard, clipboard of permission slips under one arm, slightly harried expression.',
+  tosh:    'A wiry man in his thirties, aquarist, faded teal staff t-shirt, rubber apron, long waterproof gauntlets, holding a test tube up to eye level, absorbed and unbothered.',
+  sato:    'A woman in her forties, veterinarian, white clinical scrub top over dark trousers, stethoscope around the neck, hair tied back, exhausted but steady.',
+  corey:   'A solid man in his fifties, maintenance worker, grey coveralls with the sleeves rolled, tool belt, cap pushed back, one hand resting on a pipe wrench, unimpressed.',
+
+  /* --- The Deep. Everyone on this site dresses for cold water and bad
+     weather rather than for guests, because there are no guests. --- */
+  marisol: 'A woman in her fifties, site manager, ex-navy salvage diver, heavy weatherproof site jacket over a fleece, steel-capped boots, a folded drawing under one arm, short greying hair, standing squarely with the flat unhurried stare of somebody who has seen worse.',
+  toby:    'A young man in his mid twenties, night keeper, park polo under an unzipped hi-vis jacket, a head torch pushed up on his forehead in daylight, work gloves stuffed in a pocket, tired and cheerful at the same time.',
+  sunil:   'A man in his forties, veterinarian, dark clinical fleece with the sleeves pushed up, stopwatch in one hand, waterproof notebook in the other, careful watchful expression, pointedly dry: no wetsuit, no waders.',
+  ondine:  'A woman in her thirties, rope access technician, full climbing harness worn over practical work clothes, karabiners and a descender racked at the hip, hair tied back under a helmet clipped to a shoulder strap, paint on her fingers.',
+  delia:   'A woman in her fifties, external auditor, good dark wool coat entirely wrong for a construction site, sensible shoes, a stiff document folder held against her chest with both hands, polite and unimpressed.',
+
+  /* --- The Meridian gate crew. The uniform is the point: four people in
+     IDENTICAL fluro yellow shirts and neon pink trousers, so a player who
+     has met one recognises the rest across a whole zone. --- */
+  fennel:  'A teenager, fluro yellow shirt and neon pink trousers, clipboard held against the chest with both arms, chin up, the fixed serious expression of somebody who has appointed themselves in charge.',
+  odile:   'A teenager, fluro yellow shirt and neon pink trousers, a fat ring binder open across one forearm, pen behind the ear, mid-sentence and slightly exasperated.',
+  barty:   'A teenager, fluro yellow shirt and neon pink trousers, leaning on nothing with both hands in his pockets, completely relaxed, faint permanent half-smile.',
+  sunny:   'A teenager, fluro yellow shirt worn over a second long-sleeved shirt in obvious heat, neon pink trousers, fanning their face with one hand, visibly too warm and committed to it anyway.',
+
+  /* --- Side quest visitors. Ordinary people having an ordinary day out,
+     which is the whole point of them: nobody here is in on anything. --- */
+  gareth:  'A man in his late thirties, harried father, crumpled short-sleeved shirt untucked on one side, sunglasses pushed up into his hair, phone in one hand held forgotten at his side, scanning the middle distance.',
+  oscar:   'A boy of about six, bright blue t-shirt with a large cartoon dinosaur on it, shorts, one sock up and one down, sitting with his arms round his knees looking entirely unbothered.',
+  vic:     'A man in his seventies, neat pale windcheater zipped to the chest, flat cap, standing very upright with both hands resting on a railing, dignified and quietly upset.',
+  vernon:  'A man in his eighties, beige jacket over a shirt and tie despite the weather, hands clasped behind his back, chin lifted, the settled stubborn posture of somebody who has been right for fifty years.',
+  ama:     'A woman in her forties, visiting researcher, practical field clothes and a rain shell tied at the waist, a coil of hydrophone cable over one shoulder, headphones round her neck, crouching slightly, focused and impatient.',
+  bev:     'A woman in her sixties, warm plum coat and a bright scarf, handbag over the forearm, turning towards the viewer with an expression of enormous suppressed excitement.',
+  denny:   'A man in his forties, scout leader, fleece with a group badge on the chest, lanyard, a thick sheaf of worksheets gripped in one hand, staring at the top one in dismay.',
+  ros:     'A woman in her thirties on holiday, sundress and cardigan, sunglasses, brand new sunburn, holding a phone out at arm\'s length and clearly mid-argument with somebody off to one side.',
+  lulu:    'A woman in her forties, artist, paint on three fingers and one cheek, sleeves rolled, a folding stool tucked under one arm, looking down and to the side at a bin with deep regret.',
+
+  /* --- Barry after the prosecution. Same man, same face, nothing else
+     the same. The blazer is the tell: it is the SAME blazer. --- */
+  barry_sad: 'The same tall man in his fifties, former theme park CEO, wearing the same navy blazer now creased and a size too big, open collar with no tie, shoulders rounded, hands hanging at his sides, the salesman smile completely gone and the eyes pleading.'
+};
+
+/* Animals are 512x512. The bold features are the teaching payload, so they
+   appear in Care Sessions, so the anatomy is not optional detail. */
+const ANIMAL_BRIEF = {
+  harbor_seal:          'Grey mottled coat, rounded head, large dark eyes, prominent whiskers, NO external ear flaps, hauled out resting on its belly, side-on three-quarter view.',
+  california_sea_lion:  'Sleek dark brown, VISIBLE EXTERNAL EAR FLAPS, long fore-flippers propping the chest upright, hind flippers rotated forward under the body, alert upright posture.',
+  sea_otter:            'Dense brown fur, pale face and throat, floating on its back with forepaws held up over the chest, whiskers prominent.',
+  bottlenose_dolphin:   'Sleek grey with a paler underside, PROMINENT ROUNDED MELON on the forehead and a short thick beak, tall curved dorsal fin, swimming level, side-on view.',
+  green_turtle:         'Broad low olive-brown shell with large flat scutes, LONG FLATTENED FRONT FLIPPERS HELD OUT LIKE WINGS, small blunt head, swimming, three-quarter view from above and in front.',
+  grey_nurse_shark:     'Stocky bronze-grey body with rust-coloured spots on the rear half, TWO DORSAL FINS OF NEARLY EQUAL SIZE set well back, ragged needle teeth in a slightly open mouth, hovering motionless, side-on.',
+  giant_cuttlefish:     'Broad oval mantle with a FRILLED FIN RUNNING THE ENTIRE LENGTH OF BOTH SIDES, eight short arms and two longer tentacles held together in front, W-shaped pupil, banded red-brown and cream, side-on.',
+  port_jackson_shark:   'Sandy brown with a DARK HARNESS-SHAPED BAND ACROSS THE HEAD AND SHOULDERS, blunt boxy snout, a spine at the front of each dorsal fin, resting on the bottom, side-on view.',
+
+  /* --- The Deep. Four of these are great whales, and the single most
+     important thing in each brief is the silhouette feature that tells
+     them apart, because students meet them in the Care Session and are
+     asked to reason about the animal's body against its enclosure. --- */
+  blue_whale:           'Enormous, LONG AND SLENDER with a broad flat U-SHAPED HEAD seen from above and a single ridge running to the blowholes, mottled blue-grey, PLEATED THROAT GROOVES running back past the flippers, a very SMALL DORSAL FIN set far back near the tail, swimming level, side-on.',
+  humpback_whale:       'Dark above and white below, ENORMOUS KNOBBLY WHITE PECTORAL FINS ALMOST A THIRD OF THE BODY LENGTH held out wide, KNOBBLY TUBERCLES ON THE HEAD AND JAW, low stubby dorsal fin on a hump, broad tail flukes with a ragged trailing edge, three-quarter view showing the fin span.',
+  sperm_whale:          'Dark wrinkled grey-brown, HUGE SQUARE BLOCK-SHAPED HEAD MAKING UP A THIRD OF THE BODY, narrow underslung lower jaw, single blowhole at the front left of the head, low rounded dorsal hump followed by a ridge of knuckles, side-on.',
+  false_killer_whale:   'Slender all-dark charcoal body, ROUNDED HEAD WITH NO BEAK tapering smoothly, tall slightly hooked dorsal fin at mid-body, and the diagnostic feature: PECTORAL FINS WITH A DISTINCT ELBOW BEND IN THE LEADING EDGE, swimming, side-on.',
+  dugong:               'Solid grey-brown rounded body, BROAD DOWNTURNED SNOUT FACING THE SEABED with bristly whiskers, NO DORSAL FIN AT ALL, paddle-like fore-flippers, and a WHALE-LIKE FLUKED TAIL rather than a paddle, grazing just above a seagrass meadow, side-on.'
+};
+
+/* Props vary in shape, so each carries its own canvas + ratio. */
+const PROP_BRIEF = {
+  palm:     { c:'128 × 256', r:0.500, d:'A single palm tree, slender curved trunk, five or six broad fronds fanning out at the top.' },
+  umbrella: { c:'128 × 256', r:0.500, d:'A large red and white parasol on a thin pole, canopy open, café shade umbrella.' },
+  lamp:     { c:'128 × 256', r:0.500, d:'A slim park lamp post, dark metal pole, single rounded frosted lamp head glowing warm at the top.' },
+  mangrove: { c:'128 × 256', r:0.500, d:'A young mangrove standing in shallow water, dense dark green canopy, pale arching stilt roots lifting the trunk clear of the waterline.' },
+  pillar:   { c:'128 × 256', r:0.500, d:'A square concrete support pillar, plain grey, slightly wider base and a scuff plate at floor level.' },
+  kelp:     { c:'128 × 192', r:0.667, d:'A cluster of three tall kelp fronds rising from a holdfast, broad rippled blades leaning to one side as if in current, deep blue-green.' },
+  tank:     { c:'128 × 192', r:0.667, d:'A cylindrical lit display tank on a dark plinth, glowing blue-violet water column, chrome rim at the top.' },
+  pipe:     { c:'128 × 176', r:0.727, d:'Two vertical grey filtration standpipes of different heights joined by a horizontal crossover pipe, flanged joints and a valve wheel.' },
+  bench:    { c:'128 × 160', r:0.800, d:'A wooden park bench with a slatted seat and backrest, dark metal legs, viewed from the front.' },
+  coral:    { c:'128 × 160', r:0.800, d:'A branching coral display piece, rounded knobbly branches in coral pink with pale tips, on a low sand base.' },
+  bin:      { c:'128 × 144', r:0.889, d:'A cylindrical dark grey public litter bin with a swing lid and a lighter rim.' },
+  barrel:   { c:'128 × 144', r:0.889, d:'A blue-grey plastic feed barrel with a sealed lid and a hoop rib around the middle.' },
+  planter:  { c:'128 × 144', r:0.889, d:'A square timber planter box filled with bright green ornamental foliage.' },
+  cone:     { c:'128 × 144', r:0.889, d:'An orange traffic safety cone with a single white reflective band.' },
+  trolley:  { c:'128 × 144', r:0.889, d:'A stainless steel feed trolley on castors, a lidded fish crate on the top shelf, a coiled hose on the lower shelf.' },
+  bush:     { c:'128 × 128', r:1.000, d:'A rounded low shrub, three overlapping clusters of dense foliage, dark green.' },
+  rock:     { c:'128 × 128', r:1.000, d:'A single weathered grey coastal boulder, angular faceted surfaces.' },
+  crate:    { c:'128 × 128', r:1.000, d:'A wooden supply crate with plank seams and a darker banding strap around the middle.' },
+  buoy:     { c:'128 × 128', r:1.000, d:'An orange marker buoy ring floating flat, viewed from directly above, slight water ripple around it.' },
+  lifering: { c:'128 × 128', r:1.000, d:'A red and white life ring buoy lying flat on decking, rope loops around the outside.' },
+  reed:     { c:'128 × 128', r:1.000, d:'A low tuft of estuary reeds, a dozen thin olive-green blades fanning up from a single point.' },
+
+  /* --- Arctic Cove and Open Ocean. These were added in Zones 3 and 4
+     and never given briefs, so the tool was quietly telling you to draw
+     a lighting mast on a square 128x128 canvas. Ratio is the one thing
+     that actually breaks a sprite, so they are worth filling in. --- */
+  spruce:    { c:'128 × 256', r:0.500, d:'A small potted Norway spruce, dense dark blue-green needles, straight conical shape, in a dark tub with a dusting of snow on the branches.' },
+  heater:    { c:'128 × 256', r:0.500, d:'A patio gas heater, tall slim post on a round weighted base, wide mushroom reflector hood at the top, warm orange glow beneath it.' },
+  mast:      { c:'128 × 256', r:0.500, d:'A tall galvanised lighting mast, slim square-section column, twin floodlight heads angled outward on a crossbar at the top, cable clipped down one side.' },
+  hoarding:  { c:'128 × 192', r:0.667, d:'A single panel of blue construction site hoarding, plywood face on a timber frame with visible feet, edges weathered, one corner poster peeling.' },
+  iceblock:  { c:'128 × 144', r:0.889, d:'A rough-cut block of pale blue ice, faceted translucent faces, meltwater darkening the ground at its base.' },
+  drift:     { c:'128 × 128', r:1.000, d:'A wind-sculpted drift of packed snow, smooth curved crest with a shadowed hollow on the leeward side.' },
+  pallet:    { c:'128 × 128', r:1.000, d:'A stack of three timber shipping pallets, slatted decks and blocky feet, top one slightly askew.' },
+
+  /* --- The Deep. Everything here is marine construction: galvanised,
+     salt-stained and bolted to something. --- */
+  gantry:    { c:'128 × 256', r:0.500, d:'A galvanised steel gantry frame, two braced uprights joined by a cross beam with a lifting eye hanging from the centre, bolted base plates, rust bleeding from the fixings.' },
+  netpost:   { c:'128 × 256', r:0.500, d:'A heavy galvanised net stanchion set into concrete, a taut braided rope net laced to eyelets down one side, weed and salt staining the lower third.' },
+  barrier:   { c:'128 × 128', r:1.000, d:'A bright orange plastic water-filled site barrier, two interlocking sections, one reflective white band, a cable-tied laminated notice hanging off the front.' },
+  deckplate: { c:'128 × 96',  r:1.333, d:'A flat galvanised chequer-plate deck section laid over a gap in a pontoon walkway, four countersunk bolt heads, viewed at a low angle so it reads as lying flat.' }
+};
+
+/* ------------------------------------------------------------------
+   GROUND TILES. All 128 × 128, ratio 1.000, and the three rules below
+   matter more than anything in the descriptions:
+
+     1. SEAMLESS. Each one is laid edge to edge in a grid thousands of
+        times over. The left edge must continue into the right and the
+        top into the bottom, with no seam and no visible repeat.
+     2. STRAIGHT DOWN. Flat top-down, no perspective and no horizon.
+     3. NO BAKED LIGHTING. No sun direction, no drop shadows, no
+        vignette. The renderer already varies brightness per tile, and
+        a light source drawn into the texture fights it and turns the
+        whole floor into a checkerboard.
+
+   Keep them LOW CONTRAST and low frequency. Each one draws at 32px on
+   screen, so fine detail turns to noise and anything busy makes the
+   characters standing on it unreadable. These are backgrounds.
+
+   Every one is optional: a missing tile falls back to the flat
+   placeholder colour listed beside it in the tool.
+   ------------------------------------------------------------------ */
+const TILE_BRIEF = {
+  /* --- Zone 1 and shared --- */
+  grass:      'Mown coastal park lawn, seamless, muted green, fine irregular blade texture with a few slightly paler patches. No mow stripes, no edges.',
+  path:       'Pale grey pedestrian paving, seamless, fine aggregate speckle, faint irregular joint lines. Worn and public, not new.',
+  deck:       'Weathered timber decking, seamless, warm grey-brown boards running one way with thin gaps and light grain. Salt-bleached.',
+  sand:       'Fine dry beach sand, seamless, warm pale gold, gentle ripple texture and a scatter of tiny darker grains.',
+  floor:      'Sealed concrete interior floor, seamless, mid grey, faint trowel swirl and a light scuff or two.',
+  water:      'Clean pool water seen from directly above, seamless, mid blue, soft caustic ripple. No sky reflection and no shoreline.',
+  fence:      'Dark galvanised mesh fencing seen from above, seamless, near-black diamond weave over a dark ground.',
+  wall:       'Rendered building wall from above, seamless, warm grey-brown, subtle roughcast texture.',
+  glass:      'Thick viewing glass seen from above, seamless, cool blue-green, very faint horizontal banding and a hint of depth. Almost featureless on purpose.',
+  door:       'A timber threshold panel, seamless, warm mid brown, vertical boarding with a slightly worn centre. Reads as a way through.',
+  gate:       'A metal service gate panel from above, seamless, olive-brass, vertical bars with a flat rail across.',
+  staffwall:  'Staff block wall from above, seamless, warm brick red-brown, coursed brick texture. This one is DELIBERATELY the odd building out, so it should read differently from the generic wall at a glance.',
+
+  /* --- Zone 2 --- */
+  board:      'Boardwalk timber, seamless, honey-brown planks with visible grain and thin dark gaps, slightly rougher than the pool decking.',
+  shallow:    'Warm shallow water over pale sand, seamless, bright turquoise, the sand faintly visible through it with soft ripple light.',
+  hall:       'Polished indoor aquarium floor, seamless, dark blue-grey, low sheen and a faint mottle. Dim, because the hall is dim.',
+
+  /* --- Zone 3 --- */
+  snow:       'Trodden snow, seamless, near-white with cool blue-grey shading in the compressed hollows, a scatter of footprint texture. Keep it very low contrast.',
+  ice:        'Haul-out ice apron, seamless, pale blue-white, fine crazing and frozen meltwater sheen, walkable and matt rather than glassy.',
+  coldwater:  'Chilled pool water from above, seamless, deep petrol blue, slow heavy ripple, colder and darker than the Zone 1 water.',
+
+  /* --- Zone 4 --- */
+  oceanwater: 'Deep show-pool water from above, seamless, rich dark blue, long slow swell and faint caustics. Reads as very deep.',
+  terrace:    'Stadium seating concrete, seamless, warm pale grey, fine aggregate with faint straight expansion joints.',
+  steel:      'Painted steel plant-room floor, seamless, mid slate grey, subtle diamond-plate relief kept very low contrast.',
+
+  /* --- Zone 5 --- */
+  deepwater:  'Flooded quarry water from above, seamless, near-black green-blue, almost no ripple, no visible bottom. This is the darkest tile in the game and it should feel like it.',
+  quarry:     'Blasted quarry rock floor, seamless, cold grey stone with angular fracture faces and grit between them, dry and hard.',
+  pontoon:    'Floating pontoon decking, seamless, grey composite planks with a fine anti-slip grit finish and thin dark joints, salt-stained.',
+  seagrass:   'Dense seagrass meadow seen from above through shallow water, seamless, deep green blades lying in a loose common direction with darker sediment showing between them.'
+};
+
+/* ------------------------------------------------------------------
+   One-line generation prompts, keyed by target. These feed the
+   "Still to generate" list, so they are deliberately short and start
+   with the subject. Anything without an entry falls back to its full
+   brief above, which keeps future zones usable with no edit here.
+   ------------------------------------------------------------------ */
+const SHORT = {
+  'npc:dana':    'a woman in her forties, senior marine trainer, sun-faded orange-tan work polo, whistle on a cord, hair tied back',
+  'npc:milo':    'a young man in his twenties, junior trainer, teal staff polo, wetsuit tied around the waist by its sleeves',
+  'npc:wren':    'a woman in her fifties in casual visitor clothes, wide-brimmed sun hat, pale green shirt, tote bag over one shoulder',
+  'npc:sable':   'a woman in her thirties, animal rights campaigner, purple-pink jacket, holding a stack of leaflets',
+  'npc:ollie':   'an excited boy about nine years old, bright yellow t-shirt, shorts, small backpack',
+  'npc:nan':     'an elderly woman visitor, dusty rose cardigan, sensible shoes, handbag held in front with both hands',
+  'npc:barry':   'a tall confident man in his fifties, theme park CEO, navy blazer over an open-collar shirt, polished salesman smile',
+  'npc:priya':   'a woman in her late thirties, head dolphin trainer, navy wetsuit top over board shorts, whistle and stopwatch on a lanyard, arms folded',
+  'npc:margo':   'a polished woman in her forties, corporate manager, tailored plum blazer, tablet held against her chest, fixed smile',
+  'npc:ibrahim': 'a dignified man in his seventies, volunteer guide, pale blue polo with a name badge, wide-brimmed sun hat, walking stick',
+  'npc:jarrah':  'a young man in his twenties, aquarist and diver, black wetsuit peeled to the waist, one dive glove on, wet hair, grinning',
+  'npc:dessie':  'a woman in her fifties, schoolteacher on an excursion, green cardigan and lanyard, clipboard of permission slips under one arm',
+  'npc:tosh':    'a wiry man in his thirties, aquarist, faded teal staff t-shirt, rubber apron, long waterproof gauntlets, holding a test tube up',
+  'npc:sato':    'a woman in her forties, veterinarian, white clinical scrub top, stethoscope around the neck, tired but steady',
+  'npc:corey':   'a solid man in his fifties, maintenance worker, grey coveralls, tool belt, cap pushed back, holding a pipe wrench',
+
+  'npc:frost':   'a woman in her sixties, arctic zone manager, heavy fur-trimmed parka open over a polo, holding a lump of ice up to the light, severe and precise',
+  'npc:rune':    'a man in his forties, beluga trainer, thick cream cable-knit jumper under an open waterproof, close-cropped pale beard, calm and mid-hum',
+  'npc:mags':    'a very large woman in her forties, walrus keeper, sleeveless insulated gilet over bare muscular arms, thermos in one hand, broad grin',
+  'npc:bo':      'a wiry man in his thirties, refrigeration engineer, wearing three coats at once, beanie, head tilted listening, torch clipped to his chest',
+  'npc:agnes':   'a small elderly woman visitor, lilac wool coat and knitted hat, enormous handbag, holding up a tiny hand-knitted jumper to measure it',
+  'npc:kit':     'a bored teenager, volunteer fleece three sizes too big with sleeves over the hands, slouched posture, utterly unimpressed expression',
+
+  'npc:halina':  'a zone manager in her forties, close-cropped hair, weathered field-researcher look, park polo under an unzipped weatherproof jacket, tablet held down at her side, tired and direct',
+  'npc:noor':    'a young cheerful trainer mid-stride, hijab under a park cap, carrying two feed buckets and a clipboard tucked under one arm, sleeves pushed up, permanently in a hurry',
+  'npc:dags':    'a heavyset maintenance man in his fifties, grubby hi-vis vest over a t-shirt, heavy toolbelt, unshaven, eyes half shut, radiating a man who has been on night shift since March',
+  'npc:vaughn':  'a security officer standing at parade rest, hands behind his back, neat dark uniform with epaulettes and a radio on the shoulder, absolutely immovable expression',
+  'npc:trixie':  'a woman in her sixties in a wide sun hat and a floral shirt, camera round her neck, homemade lanyard heavy with eleven stacked season passes',
+  'npc:ferris':  'a contractor in his thirties, band t-shirt under an open work shirt, ear defenders slung round his neck, coiling a cable around one elbow',
+
+  'animal:harbor_seal':         'a harbour seal (Phoca vitulina), grey mottled coat, rounded head, big dark eyes, NO external ear flaps, resting on its belly',
+  'animal:california_sea_lion': 'a Californian sea lion (Zalophus californianus), sleek dark brown, VISIBLE EXTERNAL EAR FLAPS, chest propped up on long fore-flippers',
+  'animal:sea_otter':           'a southern sea otter (Enhydra lutris), dense brown fur, pale face, floating on its back with forepaws over the chest',
+  'animal:bottlenose_dolphin':  'an Indo-Pacific bottlenose dolphin (Tursiops aduncus), grey with a paler belly, ROUNDED MELON on the forehead, short thick beak, tall curved dorsal',
+  'animal:green_turtle':        'a green sea turtle (Chelonia mydas), low olive-brown shell of large flat scutes, LONG FLAT FRONT FLIPPERS HELD OUT LIKE WINGS, small blunt head',
+  'animal:grey_nurse_shark':    'a grey nurse shark (Carcharias taurus), stocky bronze-grey with rust spots on the rear half, TWO NEAR-EQUAL DORSAL FINS set well back, ragged needle teeth',
+  'animal:giant_cuttlefish':    'a giant Australian cuttlefish (Sepia apama), broad oval mantle, FRILLED FIN RUNNING THE FULL LENGTH OF BOTH SIDES, W-shaped pupil, banded red-brown and cream',
+  'animal:port_jackson_shark':  'a Port Jackson shark (Heterodontus portusjacksoni), sandy brown with a DARK HARNESS BAND ACROSS THE HEAD, blunt boxy snout, spine on each dorsal fin',
+  'animal:walrus':              'a walrus (Odobenus rosmarus), huge wrinkled cinnamon-brown body, TWO LONG DOWNWARD TUSKS and a dense bristly moustache of whiskers, hauled out on its belly',
+  'animal:beluga':              'a beluga (Delphinapterus leucas), pure white, ROUNDED BULGING MELON on the forehead, NO DORSAL FIN, just a low ridge along the back, slight smiling mouthline',
+  'animal:harp_seal':           'an adult harp seal (Pagophilus groenlandicus), silvery-grey coat with a BLACK HARP-SHAPED SADDLE MARKING across the back, black face, no ear flaps, lying on ice',
+
+  'animal:orca':           'an orca (Orcinus orca), glossy black above and crisp white below, WHITE OVAL EYE PATCH and GREY SADDLE BEHIND THE TALL DORSAL FIN, fin standing straight and upright, side view',
+  'animal:pilot_whale':    'a short-finned pilot whale (Globicephala macrorhynchus), uniform charcoal-black, BULBOUS ROUNDED MELON FOREHEAD, LOW BROAD SWEPT-BACK DORSAL FIN set well forward, short pectoral fins, side view',
+  'animal:common_dolphin': 'a common dolphin (Delphinus delphis), slender, with the FOUR-PANEL HOURGLASS FLANK PATTERN: dark cape on top, TAN-GOLD PANEL FORWARD, PALE GREY PANEL BEHIND, white belly, long slim beak, side view',
+  'animal:reef_manta':     'a reef manta ray (Mobula alfredi), seen from below, huge flat diamond wings, TWO CEPHALIC LOBES (the "horns") unrolled forward beside a wide rectangular mouth, DARK SPOT PATTERN ON THE WHITE BELLY, whip-thin tail',
+
+  'prop:palm':     'a single palm tree, slender curved trunk, broad fronds fanning out at the top',
+  'prop:umbrella': 'a large red and white café parasol on a thin pole, canopy open',
+  'prop:lamp':     'a slim dark metal park lamp post with one rounded frosted lamp head',
+  'prop:mangrove': 'a young mangrove in shallow water, dense dark green canopy, pale arching stilt roots',
+  'prop:pillar':   'a plain grey square concrete support pillar with a wider base',
+  'prop:kelp':     'a cluster of three tall kelp fronds, broad rippled blades leaning to one side, deep blue-green',
+  'prop:tank':     'a cylindrical lit display tank on a dark plinth, glowing blue-violet water, chrome rim',
+  'prop:pipe':     'two grey filtration standpipes joined by a crossover pipe, flanged joints and a valve wheel',
+  'prop:bench':    'a wooden park bench with a slatted seat and backrest, dark metal legs',
+  'prop:coral':    'a branching coral display piece, knobbly coral-pink branches with pale tips, on a sand base',
+  'prop:bin':      'a cylindrical dark grey public litter bin with a swing lid',
+  'prop:barrel':   'a blue-grey plastic feed barrel with a sealed lid and a hoop rib around the middle',
+  'prop:planter':  'a square timber planter box full of bright green foliage',
+  'prop:cone':     'an orange traffic safety cone with one white reflective band',
+  'prop:trolley':  'a stainless steel feed trolley on castors, lidded fish crate on top, coiled hose below',
+  'prop:bush':     'a rounded low shrub, three overlapping clusters of dense dark green foliage',
+  'prop:rock':     'a single weathered grey coastal boulder with angular faceted surfaces',
+  'prop:crate':    'a wooden supply crate with plank seams and a darker banding strap',
+  'prop:buoy':     'an orange marker buoy ring floating flat, seen from directly above',
+  'prop:lifering': 'a red and white life ring lying flat on decking, rope loops around the outside',
+  'prop:reed':     'a low tuft of estuary reeds, thin olive-green blades fanning up from one point',
+
+  'prop:iceblock': 'a carved block of pale blue-white ice on a small pallet, chiselled facets, slightly melted at the top',
+  'prop:drift':    'a low mound of wind-packed snow with a crisp scalloped edge, blue-shadowed on one side',
+  'prop:heater':   'a tall outdoor patio heater, slim dark pole with a domed reflector top and a round gas base, faint orange glow',
+  'prop:spruce':   'a small potted spruce, dense dark blue-green needles in a tidy conical shape, in a plain timber tub, a little snow on the branches',
+
+  'prop:hoarding': 'a construction site hoarding panel, deep blue with a faded artist\'s impression of a marine park printed on it, a scuffed timber batten frame at the bottom',
+  'prop:mast':     'a tall slim stadium lighting mast, dark grey lattice pole with a small cluster of floodlights angled at the top',
+  'prop:pallet':   'a stack of three timber pallets, planks and blocks clearly visible, slightly askew',
+
+  /* ---- Zone 5: The Deep ---- */
+  'npc:marisol':   'a woman in her fifties, site manager and ex-navy salvage diver, heavy weatherproof site jacket, steel-capped boots, folded drawing under one arm, short greying hair, flat unhurried stare',
+  'npc:toby':      'a young man in his mid twenties, night keeper, park polo under an open hi-vis jacket, head torch pushed up on his forehead, tired and cheerful',
+  'npc:sunil':     'a man in his forties, veterinarian, dark clinical fleece with sleeves pushed up, stopwatch in one hand and a waterproof notebook in the other, watchful, conspicuously dry',
+  'npc:ondine':    'a woman in her thirties, rope access technician, climbing harness over work clothes, karabiners racked at the hip, helmet clipped to a shoulder strap, paint on her fingers',
+  'npc:delia':     'a woman in her fifties, external auditor, good dark wool coat entirely wrong for a construction site, stiff document folder held against her chest, polite and unimpressed',
+
+  'animal:blue_whale':         'a blue whale, long and slender, broad flat U-shaped head, pleated throat grooves, tiny dorsal fin set far back near the tail, mottled blue-grey, side-on',
+  'animal:humpback_whale':     'a humpback whale, enormous knobbly white pectoral fins a third of its body length held out wide, tubercles on the head, dark above and white below',
+  'animal:sperm_whale':        'a sperm whale, huge square block-shaped head making up a third of the body, narrow underslung jaw, single offset blowhole, knuckled ridge along the back',
+  'animal:false_killer_whale': 'a false killer whale, slender all-dark charcoal body, rounded beakless head, tall hooked dorsal fin, pectoral fins with a distinct elbow bend',
+  'animal:dugong':             'a dugong, rounded grey-brown body, broad downturned bristly snout facing the seabed, no dorsal fin at all, whale-like fluked tail, grazing over seagrass',
+
+  'prop:gantry':    'a galvanised steel gantry frame, two braced uprights and a cross beam with a lifting eye, bolted base plates, rust bleeding from the fixings',
+  'prop:netpost':   'a heavy galvanised net stanchion set in concrete, braided rope net laced to eyelets down one side, weed and salt staining the base',
+  'prop:barrier':   'a bright orange water-filled plastic site barrier with one reflective white band and a cable-tied laminated notice hanging off the front',
+  'prop:deckplate': 'a flat galvanised chequer-plate deck section covering a gap in a walkway, four countersunk bolts, seen at a low angle so it reads as lying flat'
+};
+
+let TARGETS = [];        // everything that can receive art
+let pool     = [];       // [{file,url,group}]
+let map      = {};       // targetKey -> pool filename
+let selected = null;
+let tab      = 'characters';
+let hideDone = false;    // hide anything that already has art or an assignment
+
+/* ---------- helpers ---------- */
+
+function probe(url){
+  return new Promise(res=>{
+    const i = new Image();
+    i.onload  = ()=>res({ok:true, w:i.naturalWidth, h:i.naturalHeight});
+    i.onerror = ()=>res({ok:false});
+    i.src = url;
+  });
+}
+
+/* Discovery fires ~160 probes and these files are large (raster-in-SVG
+   runs to ~600 KB each), so run them a few at a time rather than all at
+   once. Precautionary: no failure has been observed without it. */
+async function mapLimit(items, limit, fn){
+  const out = new Array(items.length);
+  let next = 0;
+  async function worker(){
+    while (next < items.length){ const i = next++; out[i] = await fn(items[i]); }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+function zoneName(id){
+  const z = SU.data.zones && SU.data.zones[id];
+  return (z && z.name) || String(id||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(map)); }catch(e){} }
+function load(){
+  try{ map = JSON.parse(localStorage.getItem(LSKEY)) || {}; }catch(e){ map = {}; }
+  // v1 stored bare NPC ids; carry them over so nobody loses their work
+  if (!Object.keys(map).length){
+    try{
+      const old = JSON.parse(localStorage.getItem(OLDKEY));
+      if (old) { Object.keys(old).forEach(k => map['npc:'+k] = old[k]); save(); }
+    }catch(e){}
+  }
+}
+
+/* ---------- build the target list from live game data ---------- */
+
+function fallbackBrief(def){
+  const out = [ (def.role||'Character').replace(/-/g,' '), 'in ' + zoneName(def.zone) + '.' ];
+  const first = def.dialogue && def.dialogue.find(d=>d.lines && d.lines.length);
+  if (first){
+    const spoken = first.lines.find(l=>/^[A-Z][A-Z '.]+:/.test(l)) || first.lines[0];
+    out.push('Sample line: ' + spoken.replace(/^[A-Z][A-Z '.]+:\s*/,'“') + '”');
+  }
+  return out.join(' ');
+}
+
+function collect(){
+  const D = SU.data, out = [];
+
+  Object.keys(D.npcs||{}).forEach(id=>{
+    const def = D.npcs[id];
+    out.push({
+      key:'npc:'+id, tab:'characters',
+      group: OUTSIDER.test(def.role||'') ? 'character' : 'employee',
+      name: def.name || id, sub: def.role || '-', where: zoneName(def.zone),
+      code: id, file: 'npc_' + id + '.svg', art: 'npc_' + (def.sprite || id),
+      alias: def.sprite || null,
+      brief: NPC_BRIEF[id] || fallbackBrief(def),
+      canvas: '128 × 192', ratio: 0.667
+    });
+  });
+
+  Object.keys(D.species||{}).forEach(id=>{
+    const sp = D.species[id];
+    out.push({
+      key:'animal:'+id, tab:'animals', group:'animal',
+      name: sp.name || id, sub: 'Species', where: 'Care Session portrait',
+      code: id, file: 'animal_' + id + '.svg', art: 'animal_' + id, alias:null,
+      brief: ANIMAL_BRIEF[id] || 'Whole animal visible, centred, anatomically accurate for teaching.',
+      canvas: '512 × 512', ratio: 1.0
+    });
+  });
+
+  Object.keys(D.props||{}).forEach(t=>{
+    const p = D.props[t], b = PROP_BRIEF[t];
+    out.push({
+      key:'prop:'+t, tab:'props', group:'prop',
+      name: p.name || t, sub: p.solid ? 'Solid, blocks movement' : 'Walkable scenery',
+      where: 'shape: ' + p.shape, code: t,
+      file: 'prop_' + t + '.svg', art: 'prop_' + t, alias:null,
+      brief: b ? b.d : 'Scenery prop.',
+      canvas: b ? b.c : '128 × 128', ratio: b ? b.r : 1.0
+    });
+  });
+
+  /* Ground tiles. All one canvas and one ratio, so unlike props they
+     carry no per-item geometry. The placeholder colour is shown as the
+     location, because that is the thing the art is replacing. */
+  Object.keys(D.tiles||{}).forEach(t=>{
+    const def = D.tiles[t];
+    out.push({
+      key:'tile:'+t, tab:'tiles', group:'tile',
+      name: t, sub: def.solid ? 'Solid, blocks movement' : 'Walkable ground',
+      where: 'placeholder ' + (def.colour || ''), code: t,
+      file: 'tile_' + t + '.svg', art: 'tile_' + t, alias:null,
+      brief: TILE_BRIEF[t] || 'Seamless top-down ground texture, low contrast, no baked lighting.',
+      canvas: '128 × 128', ratio: 1.0
+    });
+  });
+
+  return out;
+}
+
+async function detectExistingArt(){
+  await mapLimit(TARGETS, 8, async t=>{
+    for (const ext of ['svg','png','webp']){
+      const r = await probe(ART_DIR + t.art + '.' + ext);
+      if (r.ok){ t.hasArt = true; t.artUrl = ART_DIR + t.art + '.' + ext; return; }
+    }
+  });
+}
+
+/* Directory listing is impossible from file://, so probe the naming
+   patterns in use and keep whatever answers. "Add files…" covers the rest. */
+async function discoverPool(){
+  /* 'T' added with the Tiles tab. Anything outside this range, or named
+     some other way, still arrives through "Add files…", which is how the
+     500-series and a-series files in the pool got here. */
+  const names = [];
+  for (let i=1;i<=40;i++) ['','E','A','P','T'].forEach(p=>names.push(p+i+'.svg'));
+  const found = await mapLimit(names, 8, async f=>{
+    const r = await probe(POOL_DIR + f);
+    return r.ok ? { file:f, url:POOL_DIR+f, group:poolGroup(f), w:r.w, h:r.h } : null;
+  });
+  pool = found.filter(Boolean).sort(cmpFile);
+}
+
+function cmpFile(a,b){
+  const oa = PREFIXES.findIndex(p=>p.key===a.group), ob = PREFIXES.findIndex(p=>p.key===b.group);
+  if (oa !== ob) return oa - ob;
+  return (parseInt(a.file.replace(/\D/g,''),10)||0) - (parseInt(b.file.replace(/\D/g,''),10)||0);
+}
+
+/* ---------- render ---------- */
+
+function taken(){ return new Set(Object.values(map)); }
+function poolItem(file){ return pool.find(p=>p.file===file); }
+
+function render(){ renderTabs(); renderTargets(); renderPool(); renderTodo(); renderStats(); }
+
+/* Short line used by the generation list; falls back to the full brief so
+   content added later still shows something useful. */
+function shortOf(t){ return SHORT[t.key] || t.brief; }
+
+function tabTargets(id){ return TARGETS.filter(t=>t.tab===id && !t.alias); }
+function covered(t){ return !!map[t.key] || t.hasArt; }
+
+function renderTabs(){
+  const host = document.getElementById('tabs');
+  host.innerHTML = '';
+  TABS.forEach(T=>{
+    const list = tabTargets(T.id);
+    const done = list.filter(covered).length;
+    const b = document.createElement('button');
+    b.className = 'tab' + (tab===T.id ? ' on' : '');
+    b.innerHTML = T.label +
+      '<span class="cnt">' + done + '/' + list.length + '</span>' +
+      '<span class="pfx">' + T.prefix + '</span>';
+    b.onclick = ()=>{ tab = T.id; selected = null; render(); };
+    host.appendChild(b);
+  });
+}
+
+function renderStats(){
+  const all = TARGETS.filter(t=>!t.alias);
+  const free = pool.length - taken().size;
+  document.getElementById('stats').innerHTML =
+    '<b>' + all.filter(covered).length + '</b>/' + all.length + ' sprites covered overall · ' +
+    '<b>' + free + '</b>/' + pool.length + ' pool images free';
+  document.getElementById('poolCount').innerHTML =
+    '<b>' + free + '</b> of <b>' + pool.length + '</b> still free. Assigned images leave this list.';
+}
+
+function renderTargets(){
+  const host = document.getElementById('targets');
+  host.innerHTML = '';
+
+  const groups = tab === 'characters'
+    ? [['employee','Park employees','on the Sea Universe payroll, E-numbered files'],
+       ['character','Other characters','visitors, contacts and outsiders, plain-numbered files']]
+    : tab === 'animals'
+      ? [['animal','Species','Care Session portraits, anatomy is the teaching payload']]
+      : tab === 'tiles'
+        ? [['tile','Ground tiles','all 128 × 128 and all SEAMLESS, top-down, no baked lighting']]
+        : [['prop','Scenery props','note the canvas, props are not all the same shape']];
+
+  groups.forEach(([g,title,sub])=>{
+    /* Aliases are excluded here and listed once in their own section
+       below, otherwise they render twice. */
+    const list = TARGETS.filter(t=>t.tab===tab && t.group===g && !t.alias && !(hideDone && covered(t)))
+                        .sort((a,b)=> (covered(a)-covered(b)) || a.name.localeCompare(b.name));
+    if (!list.length) return;
+    const h = document.createElement('h2');
+    h.className='sec';
+    h.innerHTML = title + '<span>' + list.length + ' · ' + sub + '</span>';
+    host.appendChild(h);
+    const grid = document.createElement('div');
+    grid.className='grid';
+    list.forEach(t=>grid.appendChild(card(t)));
+    host.appendChild(grid);
+  });
+
+  // aliases (characters reusing another's art) listed once, at the end.
+  // They need no image, so "Hide completed" hides them too.
+  const al = hideDone ? [] : TARGETS.filter(t=>t.tab===tab && t.alias);
+  if (al.length){
+    const h=document.createElement('h2'); h.className='sec';
+    h.innerHTML='Reuses existing art<span>' + al.length + ' · no new image needed</span>';
+    host.appendChild(h);
+    const grid=document.createElement('div'); grid.className='grid';
+    al.forEach(t=>grid.appendChild(card(t)));
+    host.appendChild(grid);
+  }
+
+  if (!host.children.length){
+    host.innerHTML = '<h2 class="sec">Nothing outstanding<span>every ' +
+      TABS.find(t=>t.id===tab).noun +
+      ' sprite has art</span></h2>' +
+      '<p class="hint">Turn off <b>Hide completed</b> to see them again.</p>';
+  }
+}
+
+/* ---- still-to-generate list ----
+   Lives under the pool so the art can be generated straight down the
+   list without hunting through the cards for what is missing. */
+function renderTodo(){
+  const T = TABS.find(x=>x.id===tab);
+  const list = TARGETS.filter(t=>t.tab===tab && !t.alias && !covered(t))
+                      .sort((a,b)=>a.name.localeCompare(b.name));
+
+  document.getElementById('todoCount').innerHTML =
+    '<b>' + list.length + '</b> ' + T.noun +
+    ' sprite' + (list.length===1?'':'s') + ' with no art yet.';
+
+  const host = document.getElementById('todoList');
+  host.innerHTML = list.length
+    ? list.map(t => '<div class="todo-item">' + esc(shortOf(t)) + '</div>').join('')
+    : '<p class="hint">All done on this tab.</p>';
+
+  document.getElementById('btnCopyTodo').disabled = !list.length;
+  window.__todoText = list.map(shortOf).join('\n');
+}
+
+function card(t){
+  const el = document.createElement('div');
+  el.className = 't' + (t.alias?' alias':'') + (selected===t.key?' sel':'');
+
+  const assigned = map[t.key];
+  const pi  = assigned ? poolItem(assigned) : null;
+  const src = pi ? pi.url : (t.hasArt ? t.artUrl : null);
+  const cls = assigned ? 'filled' : (t.hasArt ? 'existing' : '');
+
+  const chips = [];
+  if (t.alias)        chips.push('<span class="chip">reuses ' + t.alias + '.svg</span>');
+  else if (assigned)  chips.push('<span class="chip ok">→ ' + t.file + '</span>');
+  else if (t.hasArt)  chips.push('<span class="chip has">art already in place</span>');
+  else                chips.push('<span class="chip act">needs art</span>');
+  chips.push('<span class="chip">' + t.canvas + '</span>');
+
+  // wrong aspect ratio is the one thing that reliably breaks a sprite
+  if (pi && pi.w && pi.h){
+    const actual = pi.w / pi.h;
+    if (Math.abs(actual - t.ratio) / t.ratio > 0.12){
+      chips.push('<span class="chip bad">ratio ' + actual.toFixed(2) +
+                 ', wants ' + t.ratio.toFixed(2) + ', will render distorted</span>');
+    }
+  }
+
+  el.innerHTML =
+    '<div class="thumb ' + cls + '" style="height:' + Math.round(64 / (t.ratio||1)) + 'px">' +
+      (src ? '<img src="' + src + '" alt="">' : 'no art') +
+    '</div>' +
+    '<div class="meta">' +
+      '<div class="nm">' + esc(t.name) + '</div>' +
+      '<div class="rl">' + esc(t.sub) + '</div>' +
+      '<div class="zn">' + esc(t.where) + ' · <code>' + esc(t.code) + '</code></div>' +
+      '<div class="ds">' + esc(t.brief) + '</div>' +
+      chips.join('') +
+    '</div>';
+
+  if (!t.alias){
+    el.onclick = ev=>{
+      if (assigned && ev.target.closest('.thumb')){ delete map[t.key]; save(); render(); return; }
+      selected = (selected===t.key) ? null : t.key;
+      render();
+    };
+  }
+  return el;
+}
+
+function renderPool(){
+  const grid = document.getElementById('pgrid');
+  const t = taken();
+  const showAll = document.getElementById('togAll').checked;
+  const T = TABS.find(x=>x.id===tab);
+  const sel = selected ? TARGETS.find(x=>x.key===selected) : null;
+
+  const items = pool.filter(p=>!t.has(p.file) && (showAll || T.accepts.includes(p.group)))
+                    .sort((a,b)=>{
+    if (sel){                                   // exact-group matches first
+      const am = a.group===sel.group, bm = b.group===sel.group;
+      if (am !== bm) return am ? -1 : 1;
+    }
+    return cmpFile(a,b);
+  });
+
+  grid.innerHTML = '';
+  items.forEach(p=>{
+    const d = document.createElement('div');
+    d.className = 'pit' + (sel && p.group !== sel.group ? ' dim' : '');
+    d.innerHTML = '<img src="' + p.url + '" alt="" loading="lazy"><div class="fn">' + esc(p.file) + '</div>';
+    d.onclick = ()=>{
+      if (!selected){ flash('Pick something on the left first.'); return; }
+      map[selected] = p.file;
+      selected = null;
+      save(); render();
+    };
+    grid.appendChild(d);
+  });
+
+  if (!grid.children.length){
+    grid.innerHTML = '<p class="hint" style="grid-column:1/-1">' +
+      (showAll ? 'Every pool image is assigned.'
+               : 'No free <b>' + T.prefix + '</b> files. Tick the box above to see the rest.') + '</p>';
+  }
+}
+
+function flash(msg){
+  const s = document.getElementById('stats');
+  s.innerHTML = '<b style="color:#e0a34a">' + esc(msg) + '</b>';
+  setTimeout(renderStats, 1800);
+}
+
+/* ---------- the rename prompt ---------- */
+
+function buildPrompt(){
+  const rows = TARGETS.filter(t=>!t.alias && map[t.key]).map(t=>({
+    tab: t.tab,
+    from: 'sprites/Unassigned/' + map[t.key],
+    to  : 'sprites/' + t.file,
+    who : t.name,
+    replacing: t.hasArt
+  }));
+  if (!rows.length) return 'Nothing is assigned yet. Assign some images in the sprite mapper first.';
+
+  const w = Math.max(...rows.map(r=>r.from.length));
+  const block = id => {
+    const g = rows.filter(r=>r.tab===id);
+    if (!g.length) return null;
+    return '  # ' + TABS.find(t=>t.id===id).label + '\n' + g.map(r=>
+      '  ' + r.from.padEnd(w) + '  ->  ' + r.to + '   # ' + r.who +
+      (r.replacing ? '   (REPLACES existing art)' : '')).join('\n');
+  };
+  const body = TABS.map(t=>block(t.id)).filter(Boolean).join('\n\n');
+  const left = TARGETS.filter(t=>!t.alias && !map[t.key] && !t.hasArt);
+
+  return [
+    'Rename my Sea Universe sprite files. In C:\\Users\\timwi\\Downloads\\Claude\\sea-universe\\,',
+    'move each file on the left to the path on the right:',
+    '', body, '',
+    'Rules:',
+    '  - Move them out of sprites/Unassigned/ into sprites/, and do not leave copies behind.',
+    '  - Keep the .svg extension exactly as-is.',
+    '  - Any file in sprites/Unassigned/ not listed above stays where it is.',
+    (rows.some(r=>r.replacing)
+      ? '  - Lines marked REPLACES overwrite art that is already there. Show me those and confirm first.'
+      : '  - Nothing here overwrites existing art.'),
+    '',
+    'Then run the content validator and tell me if any sprite failed to load.',
+    left.length
+      ? '\nStill unassigned after this: ' +
+        TABS.map(t=>{
+          const g = left.filter(x=>x.tab===t.id);
+          return g.length ? t.label.toLowerCase() + ': ' + g.map(x=>x.name).join(', ') : null;
+        }).filter(Boolean).join('; ') + '.'
+      : '\nThat covers every sprite in the game.'
+  ].join('\n');
+}
+
+/* ---------- wiring ---------- */
+
+document.getElementById('btnGen').onclick = ()=>{
+  document.getElementById('out').value = buildPrompt();
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('out').select();
+};
+document.getElementById('btnClose').onclick = ()=>document.getElementById('modal').classList.add('hidden');
+document.getElementById('btnCopy').onclick = async ()=>{
+  const ta = document.getElementById('out'); ta.select();
+  try{ await navigator.clipboard.writeText(ta.value); }catch(e){ document.execCommand('copy'); }
+  document.getElementById('copyNote').textContent = 'Copied.';
+  setTimeout(()=>document.getElementById('copyNote').textContent='', 2000);
+};
+document.getElementById('btnClear').onclick = ()=>{
+  const n = Object.keys(map).length;
+  if (!n) return;
+  if (!confirm('Clear all ' + n + ' assignments? Files on disk are not touched.')) return;
+  map = {}; selected = null; save(); render();
+};
+document.getElementById('togAll').onchange = renderPool;
+
+document.getElementById('btnHideDone').onclick = () => {
+  hideDone = !hideDone;
+  const b = document.getElementById('btnHideDone');
+  b.textContent = hideDone ? 'Show all' : 'Hide completed';
+  b.classList.toggle('on', hideDone);
+  selected = null;
+  render();
+};
+
+document.getElementById('btnCopyTodo').onclick = async () => {
+  const txt = window.__todoText || '';
+  if (!txt) return;
+  try { await navigator.clipboard.writeText(txt); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  const b = document.getElementById('btnCopyTodo');
+  const old = b.textContent;
+  b.textContent = 'Copied';
+  setTimeout(() => { b.textContent = old; }, 1500);
+};
+document.getElementById('btnAdd').onclick = ()=>document.getElementById('filePick').click();
+document.getElementById('filePick').onchange = e=>{
+  const files = [...e.target.files];
+  let pending = files.length;
+  files.forEach(f=>{
+    if (pool.some(p=>p.file===f.name)){ if(!--pending) render(); return; }
+    const url = URL.createObjectURL(f);
+    const probeImg = new Image();
+    probeImg.onload = probeImg.onerror = ()=>{
+      pool.push({ file:f.name, url, group:poolGroup(f.name), w:probeImg.naturalWidth, h:probeImg.naturalHeight });
+      pool.sort(cmpFile);
+      if(!--pending) render();
+    };
+    probeImg.src = url;
+  });
+};
+
+/* ---------- boot ---------- */
+
+(async function init(){
+  if (!SU.data.npcs || !SU.data.props){
+    document.getElementById('loadWarn').innerHTML =
+      '<p class="warn">Could not read the game data files. Keep this page in the project\'s ' +
+      '<code>tools/</code> folder so <code>../data/…</code> resolves.</p>';
+    return;
+  }
+  load();
+  TARGETS = collect();
+  render();
+  await Promise.all([detectExistingArt(), discoverPool()]);
+
+  const have = new Set(pool.map(p=>p.file));
+  let dropped = false;
+  Object.keys(map).forEach(k=>{ if(!have.has(map[k])){ delete map[k]; dropped = true; } });
+  if (dropped) save();
+
+  render();
+})();
+
+})();
+</script>
+</body>
+</html>

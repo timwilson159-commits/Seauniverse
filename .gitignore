@@ -1,0 +1,6 @@
+# Local dev tooling, not part of the hosted game
+.claude/
+
+# OS junk
+Thumbs.db
+.DS_Store

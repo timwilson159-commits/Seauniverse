@@ -1,0 +1,933 @@
+/* ============================================================
+   SEA UNIVERSE: STYLES
+   ============================================================ */
+:root {
+  --bg:        #0d1319;
+  --panel:     #172029;
+  --panel-2:   #1e2934;
+  --line:      #2c3a47;
+  --ink:       #e8eef3;
+  --muted:     #8fa2b2;
+  --accent:    #4fa3d1;
+  --accent-2:  #6fd18a;
+  --warn:      #e0a34a;
+  --bad:       #e05c5c;
+  --radius:    10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+#app {
+  width: 960px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+/* ---------- HUD ---------- */
+#hud {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+.hud-block { min-width: 92px; }
+.hud-block.wide { flex: 1 1 150px; }
+.hud-a { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.hud-b { font-size: 14px; font-weight: 600; }
+.meter {
+  height: 7px; background: #0c1219; border-radius: 4px;
+  overflow: hidden; margin: 3px 0;
+}
+.meter.sm { height: 5px; }
+/* running quest timer, only shouts in the last 30 seconds */
+.hud-block.urgent .hud-a, .hud-block.urgent .hud-b { color: var(--warn); }
+.meter span { display: block; height: 100%; transition: width .25s ease; }
+
+/* ---------- the shift clock ----------
+   The time reads as the clock and the label under it as the caption, so
+   the usual hud-a/hud-b sizing is inverted here on purpose. */
+.hud-block.clock { min-width: 132px; }
+.clock-day { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.hud-block.clock .hud-a {
+  font-size: 25px; font-weight: 700; line-height: 1.05;
+  color: var(--text); font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.hud-block.clock .hud-b { font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+.clock-bar { height: 3px; background: #0c1219; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+/* NO transition: this is repainted every frame, and easing a value that
+   changes 60 times a second makes it lag behind the digits. */
+.clock-bar span { display: block; height: 100%; background: var(--accent); }
+
+/* ---------- stage ---------- */
+#stage { position: relative; line-height: 0; }
+#view {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #10161c;
+  image-rendering: pixelated;
+}
+#prompt {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  background: rgba(10,16,22,.9); border: 1px solid var(--line);
+  padding: 6px 14px; border-radius: 20px; font-size: 14px; line-height: 1.4;
+  white-space: nowrap;
+}
+#devReport {
+  position: absolute; right: 8px; top: 8px; max-width: 420px;
+  background: rgba(10,16,22,.94); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font: 11px/1.45 monospace; line-height: 1.45;
+}
+
+/* ---------- controls ---------- */
+#controls {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 8px 10px;
+}
+#controls .hint { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+button {
+  background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 7px 13px; font: inherit; font-size: 14px; cursor: pointer;
+}
+button:hover:not(:disabled) { background: #27333f; border-color: #3b4b59; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #06121a; font-weight: 600; }
+button.primary:hover { background: #63b4de; }
+
+kbd {
+  background: #0c1219; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 4px; padding: 1px 5px; font: 12px/1 monospace;
+}
+
+/* ---------- modals ---------- */
+.modal {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(6,10,14,.72);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px; line-height: 1.5;
+}
+.modal.hidden, .hidden { display: none !important; }
+
+/* title */
+.title-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 34px; max-width: 520px; text-align: center;
+}
+.title-box h1 { margin: 0; font-size: 40px; letter-spacing: .08em; }
+.tagline { color: var(--accent); font-style: italic; margin: 6px 0 18px; }
+.blurb { color: var(--muted); }
+.title-btns { display: flex; gap: 10px; justify-content: center; margin: 22px 0 10px; }
+.version { color: var(--muted); font-size: 12px; margin: 0; }
+
+/* dialogue */
+.dlg-wrap {
+  width: 640px; max-width: 100%;
+  align-self: flex-end; margin-bottom: 6vh;
+}
+/* Portrait sits on top of the box so students connect names to faces.
+   Sized 3x for readability; vh clamp stops it pushing the text box
+   off the top of a short window. */
+.dlg-portrait {
+  height: min(336px, 38vh);
+  aspect-ratio: 92 / 112;
+  width: auto;
+  margin-left: 16px; margin-bottom: -12px;
+  background: linear-gradient(180deg, #223040 0%, var(--panel-2) 100%);
+  border: 1px solid var(--line); border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  overflow: hidden; position: relative; z-index: 1;
+}
+.dlg-portrait img {
+  width: 100%; height: 100%;
+  object-fit: contain; object-position: bottom;
+  padding: 8px 6px 0;
+}
+.dlg-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 18px 20px;
+  width: 100%;
+  position: relative; z-index: 2;
+}
+.dlg-name { color: var(--accent); font-weight: 700; margin-bottom: 6px; letter-spacing: .02em; }
+.dlg-text { min-height: 3em; white-space: pre-wrap; }
+.dlg-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+.dlg-hint { color: var(--muted); font-size: 12px; }
+.dlg-page { color: var(--muted); font-size: 12px; }
+.dlg-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.choice { text-align: left; }
+
+/* care session */
+.care-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 20px; width: 820px; max-width: 100%;
+  max-height: 88vh; overflow-y: auto; line-height: 1.5;
+}
+.care-head { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.care-head h2 { margin: 0; font-size: 21px; }
+.care-sub { color: var(--muted); font-size: 13px; }
+/* 3x size: the animal is the thing being observed, so it leads the panel. */
+.care-avatar {
+  width: min(288px, 32vh); height: min(288px, 32vh);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 34px; color: #0c1219; flex: 0 0 auto;
+  position: relative; overflow: hidden;
+  border: 1px solid rgba(0,0,0,.35);
+}
+.care-avatar img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; z-index: 1; padding: 6px;
+}
+.care-avatar img + span { visibility: hidden; }
+
+@media (max-width: 560px) {
+  .care-avatar { width: min(180px, 26vh); height: min(180px, 26vh); font-size: 24px; }
+  .dlg-portrait { height: min(210px, 26vh); }
+}
+.care-close { margin-left: auto; }
+.care-prompt {
+  background: var(--panel-2); border-left: 3px solid var(--accent);
+  padding: 10px 14px; border-radius: 6px; margin: 16px 0;
+}
+.care-cols { display: flex; gap: 18px; flex-wrap: wrap; }
+.care-col { flex: 1 1 320px; }
+.care-col h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.pill {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 20px; padding: 1px 9px; font-size: 11px;
+  text-transform: none; letter-spacing: 0; margin-left: 6px;
+}
+.cue-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.cue {
+  background: var(--panel-2); border-left: 3px solid var(--line);
+  padding: 8px 12px; border-radius: 5px; margin-bottom: 6px; font-size: 14px;
+}
+.cue.key { border-left-color: var(--accent-2); }
+.cue.empty { color: var(--muted); font-style: italic; border-left-color: transparent; }
+.care-tools { display: flex; gap: 8px; }
+.care-options { display: flex; flex-direction: column; gap: 7px; }
+.opt { text-align: left; }
+.care-feedback { margin-top: 12px; font-size: 14px; }
+.care-feedback.bad { color: var(--warn); }
+.fb-good { color: var(--accent-2); }
+.care-result h3 { font-size: 20px; margin-top: 0; }
+.lesson {
+  background: var(--panel-2); border-radius: 8px;
+  padding: 12px 15px; margin: 14px 0;
+  border-left: 3px solid var(--accent-2);
+}
+.lesson-tag { font-size: 11px; letter-spacing: .1em; color: var(--accent-2); }
+.lesson p { margin: 6px 0 0; }
+.ev-note { color: var(--warn); }
+.rewards { color: var(--accent-2); font-weight: 600; }
+.care-note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+
+/* journal / shop */
+.journal-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 780px; max-width: 100%;
+  max-height: 88vh; display: flex; flex-direction: column;
+}
+.tabs {
+  display: flex; gap: 4px; padding: 10px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line); align-items: center;
+}
+.tabs button { padding: 6px 12px; font-size: 14px; }
+.tabs button.on { background: var(--accent); border-color: var(--accent); color: #06121a; font-weight: 600; }
+.tabs .close { margin-left: auto; }
+.shop-title { font-weight: 700; padding: 6px 4px; }
+.panel-body { padding: 16px 20px 22px; overflow-y: auto; line-height: 1.55; }
+.panel-body h2 { margin-top: 0; font-size: 20px; }
+.panel-body h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 0 8px; }
+.muted { color: var(--muted); }
+
+/* Where a task or step happens. Quiet enough to skim past, present
+   enough that you never have to remember which zone Rune is in. */
+.place {
+  color: var(--muted); font-size: 12px; font-weight: 400;
+  white-space: nowrap;
+}
+.card-top .place { margin-left: auto; padding-right: 8px; }
+.card.done .place { margin-left: 8px; }
+.steps .place { font-size: 11px; opacity: .85; }
+.steps li.done .place { opacity: .5; }
+
+/* ---------- keypad (coded doors) ---------- */
+.keypad-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 460px; max-width: 100%;
+  max-height: 88vh; display: flex; flex-direction: column;
+}
+.keypad-clue {
+  border: 1px dashed var(--line); border-radius: 8px;
+  padding: 10px 14px; margin: 12px 0; background: rgba(255,255,255,.03);
+  font-style: italic; line-height: 1.5;
+}
+.keypad-clue p { margin: 6px 0; }
+.keypad-display {
+  font: 30px/1.2 monospace; letter-spacing: .18em; text-align: center;
+  padding: 12px; margin: 4px 0 6px;
+  background: #0c1a16; border: 1px solid var(--line); border-radius: 8px;
+  color: #7fe0a8;
+}
+.keypad-msg { min-height: 34px; font-size: 14px; color: var(--muted); }
+.keypad-msg.bad  { color: #e08a8a; }
+.keypad-msg.good { color: #7fd18a; }
+.keypad-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px;
+}
+.keypad-key { padding: 14px 0; font: 20px/1 monospace; }
+.keypad-key.alt { font-size: 14px; color: var(--muted); }
+/* A word lock needs an alphabet, so the grid widens and the keys shrink.
+   Six columns fits 26 letters plus CLR and ⌫ into a tidy rectangle. */
+.keypad-grid.letters { grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.keypad-grid.letters .keypad-key { padding: 10px 0; font-size: 16px; }
+.keypad-grid.letters .keypad-key.alt { font-size: 12px; }
+
+/* ---------- audio controls (footer) ---------- */
+.audio-ctl { display: flex; align-items: center; gap: 6px; margin-left: 4px; }
+.audio-ctl .aud {
+  padding: 4px 8px; font-size: 15px; line-height: 1;
+  min-width: 34px; text-align: center;
+}
+.audio-ctl .aud.off { opacity: .45; }
+.audio-ctl .vol {
+  -webkit-appearance: none; appearance: none;
+  width: 74px; height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,.16); outline: none; cursor: pointer;
+}
+.audio-ctl .vol:disabled { opacity: .3; cursor: default; }
+.audio-ctl .vol::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+}
+.audio-ctl .vol::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+}
+@media (max-width: 900px) { .audio-ctl .vol { width: 52px; } }
+
+/* ---------- the hearing (endgame) ----------
+   Deliberately plainer than the Care Session. This scene is three
+   people and a recorder on a table, and the panel should feel like
+   paperwork rather than like a boss fight, because that is the point
+   the whole game has been making. */
+.hearing-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 780px; max-width: 100%;
+  max-height: 90vh; overflow-y: auto; padding: 20px 24px;
+}
+.hear-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+.hear-head h2 { margin: 0; }
+.hear-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.hear-score {
+  margin-left: auto; text-align: right; font-size: 22px; font-weight: 700;
+  color: var(--accent); line-height: 1.1;
+}
+.hear-score span { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+
+.hear-claim {
+  border-left: 3px solid var(--warn); background: rgba(255,255,255,.03);
+  border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 12px;
+}
+.hear-claim-tag {
+  font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--warn); margin-bottom: 4px;
+}
+.hear-claim p { margin: 5px 0 0; font-size: 13px; }
+
+.hear-scene p { margin: 8px 0; line-height: 1.55; }
+.hear-reply { border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
+.hear-reply.good { background: rgba(111,209,138,.10); border: 1px solid rgba(111,209,138,.35); }
+.hear-reply.bad  { background: rgba(224,138,138,.10); border: 1px solid rgba(224,138,138,.35); }
+.hear-reply p { margin: 6px 0; line-height: 1.55; }
+
+.hear-lesson {
+  border: 1px dashed var(--line); border-radius: 8px;
+  padding: 10px 14px; margin: 12px 0; background: rgba(255,255,255,.02);
+}
+.hear-lesson strong { color: var(--accent-2); font-size: 12px; letter-spacing: .04em; }
+.hear-lesson p { margin: 5px 0 0; font-size: 14px; line-height: 1.55; }
+
+.hear-pick { margin: 16px 0 2px; font-size: 15px; }
+.hear-picksub { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+/* One option per row, full width. The DESCRIPTION is the thing being read,
+   so nothing may push it into a narrow column or truncate it. */
+.hear-opts { display: grid; gap: 8px; }
+.hear-opt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 13px; line-height: 1.35;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+}
+.hear-opt:hover { border-color: var(--accent); }
+.hear-opt strong { display: block; font-size: 13px; margin-bottom: 3px; }
+.hear-opt-text { display: block; font-size: 12.5px; line-height: 1.5; color: var(--muted); white-space: normal; }
+.hear-actions { display: flex; gap: 10px; margin-top: 16px; }
+.hear-actions button.alt { color: var(--muted); }
+
+/* ---------- end of game report + certificate ---------- */
+.report-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 720px; max-width: 100%;
+  max-height: 92vh; overflow-y: auto; padding: 20px 24px;
+}
+.rep-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rep-head h2 { margin: 0; flex: 1; }
+
+.cert {
+  border: 2px solid var(--accent); border-radius: 10px;
+  padding: 22px 26px; margin-bottom: 20px; text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+}
+.cert-rule { height: 2px; background: var(--accent); opacity: .5; margin: 0 auto 14px; width: 62%; }
+.cert-rule:last-child { margin: 14px auto 0; }
+.cert-kicker { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.cert-name { font-size: 30px; font-weight: 700; margin: 6px 0 2px; line-height: 1.15; }
+.cert-role { font-size: 13px; color: var(--accent); margin-bottom: 12px; }
+.cert-body { font-size: 15px; font-style: italic; line-height: 1.5; max-width: 460px; margin: 0 auto; }
+.cert-figs { display: flex; justify-content: center; gap: 26px; flex-wrap: wrap; margin-top: 16px; }
+.cert-figs span { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.cert-figs b { display: block; font-size: 21px; letter-spacing: 0; text-transform: none; color: var(--text); }
+
+.rep-grid { display: flex; flex-direction: column; gap: 9px; }
+.rep-row { display: grid; grid-template-columns: 150px 1fr 62px; align-items: center; gap: 10px; }
+.rep-label { font-size: 13px; }
+.rep-num { font-size: 13px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rep-note { grid-column: 2 / -1; font-size: 11px; color: var(--muted); margin-top: -4px; }
+.rep-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.rep-bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.rep-meta { margin-top: 16px; font-size: 12px; color: var(--muted); }
+.rep-left { margin-top: 8px; font-size: 13px; line-height: 1.5; }
+.rep-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+/* Printing gives you the certificate on its own, on white, and nothing else. */
+@media print {
+  body * { visibility: hidden !important; }
+  #report, #report * { visibility: visible !important; }
+  #report { position: absolute; inset: 0; background: #fff; display: block; }
+  .report-box {
+    background: #fff; border: none; box-shadow: none;
+    max-height: none; overflow: visible; width: 100%; padding: 0;
+  }
+  .rep-head, .rep-grid, .rep-meta, .rep-left, .rep-actions { display: none !important; }
+  .cert { border-color: #333; background: #fff; color: #000; margin: 40px auto; max-width: 640px; }
+  .cert-rule { background: #333; }
+  .cert-name, .cert-body, .cert-figs b { color: #000; }
+  .cert-kicker, .cert-role, .cert-figs span { color: #444; }
+}
+
+/* ---------- Safety Register (hazards) ---------- */
+.reg-head { margin-top: 4px; color: var(--warn); }
+.reg-note { margin: 2px 0 10px; font-style: italic; }
+.card.hz { display: flex; align-items: center; gap: 12px; border-left: 3px solid var(--muted); }
+.card.hz > div { flex: 1; }
+.card.hz .hz-sev {
+  flex: 0 0 auto; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  padding: 3px 8px; border-radius: 99px; background: rgba(0, 0, 0, .3);
+}
+.card.hz-high   { border-left-color: #e07a7a; }
+.card.hz-high   .hz-sev { color: #e07a7a; }
+.card.hz-medium { border-left-color: var(--warn); }
+.card.hz-medium .hz-sev { color: var(--warn); }
+.card.hz-low    .hz-sev { color: var(--muted); }
+.card.hz.fixed { opacity: .58; border-left-color: var(--accent-2); }
+.hz-fixed { color: var(--accent-2); }
+
+.card {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 9px;
+}
+.card p { margin: 5px 0 0; font-size: 14px; }
+.card.locked { opacity: .5; }
+.card.done { padding: 7px 14px; opacity: .65; }
+.card-top { display: flex; align-items: center; gap: 8px; }
+.bag-note { margin: -4px 0 12px; font-size: 12.5px; }
+/* Left column takes slots, right column is free. `align-items: start`
+   matters: without it the two columns stretch to equal height and the
+   headings stop lining up. */
+.bag-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+.bag-col { min-width: 0; }        /* let long item names wrap instead of widening the grid */
+.bag-group {
+  margin: 16px 0 7px; font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--accent-2); border-bottom: 1px solid var(--line); padding-bottom: 5px;
+}
+.bag-col > .bag-group:first-child { margin-top: 0; }
+.bag-group span { letter-spacing: 0; text-transform: none; font-size: 11.5px; margin-left: 6px; }
+/* Two half-width columns of cards are unreadable on a phone. */
+@media (max-width: 700px) { .bag-cols { grid-template-columns: 1fr; } }
+
+.card.item, .card.skill { display: flex; align-items: center; gap: 12px; }
+.card.item > div, .card.skill > div { flex: 1; }
+.card.item button, .card.skill button { flex: 0 0 auto; }
+/* Purchase button carries its price, so the cost is never a surprise. */
+.card.skill button { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 86px; }
+.card.skill button .cost {
+  font-size: 11px; font-weight: 700; letter-spacing: .03em;
+  padding: 1px 7px; border-radius: 99px;
+  background: rgba(0, 0, 0, .28); color: var(--accent);
+}
+.card.skill button:disabled .cost { color: inherit; }
+.swatch { width: 26px; height: 26px; border-radius: 6px; flex: 0 0 auto; border: 1px solid rgba(0,0,0,.4); }
+
+.card.duty { display: flex; align-items: center; gap: 12px; border-left: 3px solid var(--warn); }
+.card.duty > div { flex: 1; }
+.card.duty.done { border-left-color: var(--accent-2); opacity: .6; }
+
+.card.transit { display: flex; align-items: center; gap: 12px; }
+.card.transit > div { flex: 1; }
+/* Yellow fill, black text: this is the button that MOVES you and now
+   costs energy, so it has to read as a choice rather than as another
+   line of furniture in the list. Deliberately not the blue `.primary`
+   accent, which is used all over the menus for "confirm what you were
+   already doing"; travel is the one control here with a price on it. */
+.card.transit button {
+  flex: 0 0 auto;
+  background: #f2c14b;
+  border-color: #f2c14b;
+  color: #14100a;
+  font-weight: 700;
+}
+.card.transit button:hover { background: #ffd66b; border-color: #ffd66b; }
+.card.transit.here { border-color: var(--accent); }
+
+.tag {
+  margin-left: auto; font-size: 11px; padding: 2px 8px;
+  border-radius: 20px; background: #0c1219; border: 1px solid var(--line); color: var(--muted);
+}
+.tag.t1 { color: #8bd17c; } .tag.t2 { color: #7fc7b3; } .tag.t3 { color: #6fa8d1; }
+.tag.t4 { color: #f2d16b; } .tag.t5 { color: #c98bb9; }
+
+.steps { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+.steps li.done { color: var(--accent-2); text-decoration: line-through; opacity: .75; }
+.steps li.now { color: var(--ink); font-weight: 600; }
+.steps li.later { color: var(--muted); }
+
+.facts { font-size: 14px; margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+.facts li { margin-bottom: 4px; }
+
+.ev-welfare { color: var(--accent-2); }
+.ev-financial { color: var(--warn); }
+.ev-testimonial { color: #c98bb9; }
+.ev-pr { color: var(--accent); }
+.card.ev p { color: var(--muted); }
+.contradiction { color: var(--warn) !important; font-weight: 600; }
+
+/* toasts */
+#toasts {
+  position: absolute; right: 12px; top: 12px; z-index: 30;
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(12,18,25,.94); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  padding: 8px 13px; border-radius: 7px; font-size: 14px; line-height: 1.4;
+  max-width: 320px; transition: opacity .5s, transform .5s;
+}
+.toast.good { border-left-color: var(--accent-2); }
+.toast.bad  { border-left-color: var(--bad); }
+.toast.out  { opacity: 0; transform: translateX(20px); }
+
+/* ---------- chores on the map ----------
+   Top-left of the stage, which is the one corner nothing else uses: the
+   toasts are top-right, the prompt is bottom-centre. Never takes clicks,
+   so it can sit over the map without getting in the way of anything. */
+/* Half the size it started at, at the user's request: this is a glance,
+   not a screen, and it sits on top of the map the player is walking. */
+#chores {
+  position: absolute; left: 10px; top: 10px; z-index: 28;
+  background: rgba(12,18,25,.86); border: 1px solid var(--line);
+  border-left: 2px solid var(--accent-2);
+  border-radius: 6px; padding: 5px 8px 6px; max-width: 150px;
+  pointer-events: none; line-height: 1.3;
+}
+.chores-head {
+  font-size: 8.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent-2); margin-bottom: 3px;
+}
+.chores-head.done { margin-bottom: 0; }
+.chores-head span { float: right; letter-spacing: 0; color: var(--muted); }
+.chore { display: flex; gap: 4px; font-size: 10px; margin-top: 2px; }
+.chore-tick { color: var(--muted); flex: 0 0 auto; }
+.chore-t em { display: block; font-style: normal; font-size: 8.5px; color: var(--muted); }
+
+/* ---------- achievement popup ----------
+   Centred over the map rather than stacked with the toasts, because an
+   award is the one message the player should not be able to miss while
+   reading something else. It never blocks input: the game keeps running
+   underneath and the card fades itself out. */
+#awards {
+  position: absolute; inset: 0; z-index: 32;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+/* EVERY LINE HERE SETS ITS OWN line-height ON PURPOSE.
+   `#stage` sets `line-height: 0` to kill the inline gap under the canvas,
+   and that inherits straight into this card. Without an explicit value
+   each line collapses to zero height and they paint on top of one
+   another. Do not remove these thinking they are redundant. */
+.award-pop {
+  background: linear-gradient(180deg, rgba(18,30,40,.97), rgba(12,20,28,.97));
+  border: 1px solid var(--accent-2); border-radius: 12px;
+  padding: 18px 30px 20px; text-align: center; min-width: 280px; max-width: 380px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.55);
+  transition: opacity .45s, transform .45s;
+  line-height: 1.45;
+}
+.award-pop .award-kicker {
+  font-size: 11px; line-height: 1.2; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent-2);
+}
+/* The name is the thing being announced, so it gets the room. */
+.award-pop strong {
+  display: block; font-size: 21px; line-height: 1.25;
+  margin: 10px 0 8px; letter-spacing: .01em;
+}
+.award-pop p {
+  margin: 0 auto; font-size: 13px; line-height: 1.5; color: var(--muted);
+  max-width: 300px; padding-top: 8px; border-top: 1px solid var(--line);
+}
+.award-pop .award-xp { margin-top: 10px; font-size: 12px; line-height: 1.2; color: var(--accent); }
+.award-pop.in  { opacity: 0; transform: scale(.9); }
+.award-pop.out { opacity: 0; transform: scale(1.04) translateY(-10px); }
+
+/* ---------- pause ---------- */
+#pauseVeil {
+  position: absolute; inset: 0; z-index: 34;
+  background: rgba(6,10,14,.66);
+  display: flex; align-items: center; justify-content: center;
+}
+.pause-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 22px 30px; text-align: center;
+}
+.pause-card strong { display: block; font-size: 20px; letter-spacing: .06em; margin-bottom: 14px; }
+
+@media (max-width: 700px) {
+  #controls .hint { display: none; }
+  .care-cols { flex-direction: column; }
+}
+
+/* ===== character select (title screen) ===== */
+.cs-head { margin: 4px 0 14px; font-size: 19px; letter-spacing: .02em; }
+.cs-label {
+  display: block; text-align: left; font-size: 12px; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--muted); margin: 14px 0 6px;
+}
+#csName, #renameInput {
+  width: 100%; padding: 10px 12px; font: inherit; font-size: 16px;
+  background: var(--panel-2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 7px;
+}
+#csName:focus, #renameInput:focus { outline: none; border-color: var(--accent); }
+.cs-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); text-align: left; }
+
+.cs-sprites { display: flex; gap: 12px; justify-content: center; }
+.cs-sprite {
+  flex: 1 1 0; background: var(--panel-2); border: 2px solid var(--line);
+  border-radius: 9px; padding: 10px 8px 8px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+}
+.cs-sprite:hover { border-color: #3f6478; }
+.cs-sprite.on { border-color: var(--accent); background: rgba(224, 163, 74, .12); }
+.cs-sprite img { height: 108px; width: auto; max-width: 100%; object-fit: contain; image-rendering: auto; }
+.cs-sprite img.missing { display: none; }
+.cs-sprite span { font-size: 13px; }
+
+/* ===== journal summary tab ===== */
+.sum-id { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 6px; }
+.sum-portrait {
+  flex: 0 0 auto; width: 104px; height: 150px; border-radius: 9px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+}
+.sum-portrait img { width: 100%; height: 100%; object-fit: contain; }
+.sum-who { flex: 1; min-width: 0; }
+.sum-name { font-size: 24px; font-weight: 700; line-height: 1.15; word-break: break-word; }
+.sum-rank { color: var(--accent); font-size: 14px; margin-bottom: 2px; }
+.sum-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+#renameRow { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+#renameRow.hidden { display: none; }
+#renameRow #renameInput { flex: 1; font-size: 14px; padding: 7px 10px; }
+
+.bars { margin-bottom: 6px; }
+.bar-row { margin-bottom: 9px; }
+.bar-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; gap: 10px; }
+.bar-track {
+  height: 9px; border-radius: 99px; overflow: hidden;
+  background: rgba(0, 0, 0, .3); border: 1px solid var(--line);
+}
+.bar-fill { height: 100%; border-radius: 99px; transition: width .25s ease; }
+
+.timed { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.timed.live { color: var(--warn); font-weight: 600; }
+
+.card.beat strong { font-size: 15px; }
+.card.beat .tag { margin-left: 8px; }
+
+/* ---------- arcade: AQUAWORD ----------
+   Deliberately plain. The cabinet is a break from the job, so it uses
+   the same panel furniture as every other overlay rather than trying
+   to look like a separate product. */
+.aqua-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 460px; max-width: 100%;
+  max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;
+}
+.aqua-grid { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 12px; }
+.aqua-row  { display: flex; gap: 6px; justify-content: center; }
+.aqua-cell {
+  width: 42px; height: 42px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  font: 600 20px/1 system-ui, sans-serif; text-transform: uppercase;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+}
+/* Not red/green alone: the letter's POSITION in the row carries the
+   meaning too, and colour-blind players need the contrast to differ. */
+.aqua-cell.correct { background: #2f6b45; border-color: #3f8b5b; color: #fff; }
+.aqua-cell.present { background: #7a6320; border-color: #9c8130; color: #fff; }
+.aqua-cell.absent  { background: #141c24; border-color: #223040; color: var(--muted); }
+
+.aqua-strip { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin-bottom: 10px; }
+.aqua-key {
+  width: 21px; height: 24px; display: flex; align-items: center; justify-content: center;
+  font: 600 11px/1 system-ui, sans-serif; border-radius: 4px;
+  background: var(--panel-2); color: var(--muted); border: 1px solid var(--line);
+}
+.aqua-key.correct { background: #2f6b45; color: #fff; border-color: #3f8b5b; }
+.aqua-key.present { background: #7a6320; color: #fff; border-color: #9c8130; }
+.aqua-key.absent  { background: #101820; color: #4d5c6b; }
+
+.aqua-entry { display: flex; gap: 8px; margin-top: 4px; }
+.aqua-entry input {
+  flex: 1; min-width: 0; padding: 9px 11px; letter-spacing: .12em; text-transform: uppercase;
+  font: 600 16px/1 system-ui, sans-serif;
+  background: #0c1219; color: var(--ink); border: 1px solid var(--line); border-radius: 7px;
+}
+.aqua-entry input:focus { outline: none; border-color: var(--accent); }
+.aqua-msg  { color: var(--warn); font-size: 13px; margin: 0 0 8px; }
+.aqua-word { margin: 6px 0 2px; letter-spacing: .12em; font-size: 22px; }
+.aqua-def  { color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
+.aqua-good { color: var(--accent-2); }
+.aqua-bad  { color: var(--warn); }
+
+.aqua-opts { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+/* One full-width row per option and the text never truncated: the
+   description IS the question, exactly as in the hearing. */
+.aqua-opt {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: 10px 13px; font-size: 13px; line-height: 1.45; white-space: normal;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; color: var(--ink);
+}
+.aqua-opt:hover { border-color: var(--accent); }
+
+@media (max-width: 520px) {
+  .aqua-cell { width: 34px; height: 34px; font-size: 17px; }
+}
+
+/* ---------- arcade: MATCH THE POD ----------
+   Same panel furniture as AQUAWORD. The board is a plain grid; the
+   card is a button so it is keyboard reachable and gets :disabled
+   for free once it is face up. */
+.pod-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 480px; max-width: 100%;
+  max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;
+}
+.pod-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin: 10px 0 4px;
+}
+.pod-card {
+  aspect-ratio: 3 / 4; width: 100%; padding: 4px 3px 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; overflow: hidden;
+}
+.pod-card:hover:not(:disabled) { border-color: var(--accent); }
+/* Face up is NOT signalled by colour alone: the back is a bare "?" and
+   the front carries art and a name, so the two never rely on hue. */
+.pod-card.up { background: #16222c; cursor: default; }
+.pod-card.matched { border-color: var(--accent-2); background: #16281f; }
+.pod-card:disabled { opacity: 1; cursor: default; }   /* face-up is not "greyed out" */
+.pod-back { font-size: 26px; font-weight: 700; color: #3d4d5c; }
+.pod-art { width: 100%; flex: 1 1 auto; min-height: 0; object-fit: contain; }
+.pod-name {
+  font-size: 9.5px; line-height: 1.15; text-align: center; color: var(--muted);
+  width: 100%; overflow-wrap: anywhere;
+}
+.pod-good { color: var(--accent-2); margin: 10px 0 0; }
+.pod-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+@media (max-width: 460px) {
+  .pod-grid { gap: 6px; }
+  .pod-name { font-size: 8.5px; }
+}
+
+/* ---------- arcade: BIGGER OR SMALLER ----------
+   Two cards side by side with the question above them. Same panel
+   furniture as the other cabinets. */
+.big-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 480px; max-width: 100%;
+  max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;
+}
+.big-ask { font-weight: 600; margin: 4px 0 12px; }
+.big-note { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+.big-row { display: flex; align-items: stretch; gap: 10px; }
+.big-card {
+  flex: 1 1 0; min-width: 0; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+}
+.big-art { width: 100%; height: 96px; object-fit: contain; }
+.big-name { font-size: 13px; font-weight: 600; text-align: center; line-height: 1.25; }
+/* The number is the point of the card, so it is the biggest thing on it. */
+.big-val { font-size: 17px; font-weight: 700; text-align: center; color: var(--accent); }
+.big-q { color: var(--muted); }
+.big-vs { align-self: center; color: var(--muted); font-size: 12px; letter-spacing: .08em; }
+
+.big-actions { display: flex; gap: 10px; margin-top: 14px; }
+.big-actions button { flex: 1 1 0; }
+.big-score { font-size: 26px; margin: 6px 0 4px; }
+.big-good { color: var(--accent-2); }
+.big-bad  { color: var(--warn); }
+
+@media (max-width: 460px) {
+  .big-art { height: 74px; }
+  .big-val { font-size: 15px; }
+}
+
+/* ---------- arcade: OCEAN CONNECTIONS ----------
+   Four colours, local to this game rather than added to :root, since
+   nothing else in the project needs a yellow or a purple. Green and
+   blue reuse --accent-2 / --accent on purpose: they already read as
+   green and blue everywhere else in the UI. */
+.conn-box {
+  --conn-yellow: #cdae4d;
+  --conn-green:  var(--accent-2);
+  --conn-blue:   var(--accent);
+  --conn-purple: #9d84e3;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; width: 520px; max-width: 100%;
+  max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;
+}
+.conn-solved {
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+  font-size: 13px; line-height: 1.4; color: #06121a;
+}
+.conn-yellow { background: var(--conn-yellow); }
+.conn-green  { background: var(--conn-green); }
+.conn-blue   { background: var(--conn-blue); }
+.conn-purple { background: var(--conn-purple); }
+
+.conn-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin: 10px 0 4px;
+}
+.conn-tile {
+  aspect-ratio: 2.1 / 1; padding: 4px 6px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+  font-size: 13px; font-weight: 600; line-height: 1.2; cursor: pointer;
+}
+.conn-tile:hover { border-color: var(--accent); }
+.conn-tile.sel { background: var(--accent); border-color: var(--accent); color: #06121a; }
+/* A wrong guess bounces rather than just vanishing, so the four tiles
+   read as "close but no" instead of looking like a stalled click. */
+.conn-tile.bounce { animation: conn-bounce 0.4s ease; }
+@keyframes conn-bounce {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.conn-actions { display: flex; gap: 10px; margin-top: 12px; }
+.conn-actions button { flex: 1 1 0; }
+.conn-good { color: var(--accent-2); margin: 10px 0 0; }
+
+@media (max-width: 460px) {
+  .conn-tile { font-size: 11px; }
+}
+
+/* ---------- arcade: SORTING STATION ----------
+   Panel chrome and score styling (.big-box / .big-actions / .big-good /
+   .big-bad) are shared with BIGGER OR SMALLER on purpose: same
+   scored-quiz shape, no reason to duplicate it. Only the card and the
+   option grid are new. */
+.sort-ask { font-weight: 600; margin: 4px 0 12px; }
+.sort-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px;
+  padding: 14px; margin-bottom: 14px;
+}
+.sort-art { width: 100%; height: 120px; object-fit: contain; }
+.sort-name { font-size: 16px; font-weight: 700; }
+.sort-opts {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.sort-opt { padding: 12px 8px; }
+
+@media (max-width: 460px) {
+  .sort-art { height: 90px; }
+  .sort-opts { grid-template-columns: 1fr; }
+}
+
+/* ---------- arcade: RESCUE! ----------
+   Reuses AQUAWORD's .aqua-box / .aqua-key / .aqua-word / .aqua-def /
+   .aqua-opts wholesale; only the QWERTY row stagger and the miss
+   lights are new. */
+
+/* .aqua-key is sized for a passive letter-state STRIP in AQUAWORD; here
+   the keys are the primary click target (as well as answering to a
+   physical keyboard), so they get a bit more room to tap. */
+.rescue-key { width: 30px; height: 34px; font-size: 13px; }
+.rescue-row + .rescue-row { margin-top: 2px; }
+/* Each row nudges right, same stagger a real keyboard has, purely so
+   it reads as a keyboard at a glance rather than a grid of letters. */
+.rescue-row:nth-child(2) { margin-left: 15px; }
+.rescue-row:nth-child(3) { margin-left: 30px; }
+
+.rescue-misses { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+.rescue-miss {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #1a1013; border: 1px solid var(--line);
+}
+/* Not just a colour swap: the glow is what reads as "lit" at a glance,
+   the same reason the search rings in js/world.js never rely on hue
+   alone. */
+.rescue-miss.lit {
+  background: var(--bad); border-color: var(--bad);
+  box-shadow: 0 0 6px 1px var(--bad);
+}
+
+@media (max-width: 460px) {
+  .rescue-key { width: 24px; height: 30px; font-size: 11px; }
+  .rescue-row:nth-child(2) { margin-left: 10px; }
+  .rescue-row:nth-child(3) { margin-left: 20px; }
+}

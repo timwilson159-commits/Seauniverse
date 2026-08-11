@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="44" viewBox="0 0 32 44">
+  <!-- ============================================================
+       STYLE REFERENCE SPRITE: Sea Universe trainer (facing down)
+       Canvas 32 wide x 44 tall. Feet sit ON the bottom edge.
+       Transparent background. Light comes from the top-left.
+       Match this scale and footing for all character sprites.
+       ============================================================ -->
+
+  <!-- contact shadow: keeps the character sitting on the ground -->
+  <ellipse cx="16" cy="41.5" rx="9" ry="2.6" fill="#000" opacity="0.28"/>
+
+  <!-- legs -->
+  <rect x="11.5" y="30" width="4" height="11" rx="1.6" fill="#2f4756"/>
+  <rect x="16.5" y="30" width="4" height="11" rx="1.6" fill="#35505f"/>
+  <!-- boots -->
+  <rect x="10.8" y="38.5" width="5.4" height="3" rx="1.2" fill="#1b2b34"/>
+  <rect x="15.8" y="38.5" width="5.4" height="3" rx="1.2" fill="#1b2b34"/>
+
+  <!-- torso: staff polo -->
+  <path d="M9.5 19 q6.5 -2.5 13 0 l1 12 q-7.5 2 -15 0 z" fill="#2f7fa8"/>
+  <path d="M9.5 19 q3 -1.2 6.5 -1.6 l0 13.8 q-3.4 -0.2 -6.5 -0.8 z" fill="#3d92bc"/>
+
+  <!-- lanyard -->
+  <path d="M13 18.5 L16 26 L19 18.5" stroke="#e0a34a" stroke-width="1.6" fill="none"/>
+  <rect x="14.2" y="25.5" width="3.6" height="4.6" rx="0.8" fill="#f2e3c0" stroke="#b9a375" stroke-width="0.5"/>
+
+  <!-- arms -->
+  <rect x="6.8" y="19.5" width="3.6" height="10" rx="1.8" fill="#2f7fa8"/>
+  <rect x="21.6" y="19.5" width="3.6" height="10" rx="1.8" fill="#2a7299"/>
+  <circle cx="8.6" cy="30" r="2.1" fill="#e8bb96"/>
+  <circle cx="23.4" cy="30" r="2.1" fill="#dcae89"/>
+
+  <!-- head -->
+  <circle cx="16" cy="12.5" r="7.2" fill="#e8bb96"/>
+  <path d="M8.8 12.5 a7.2 7.2 0 0 1 14.4 0 z" fill="#4a3628"/>
+  <path d="M8.8 11.8 q7.2 -5.2 14.4 0 q-1 -7.4 -7.2 -7.4 q-6.2 0 -7.2 7.4 z" fill="#5a4232"/>
+
+  <!-- face: simple and readable at 32px, no fine detail -->
+  <circle cx="13.2" cy="13.4" r="1.15" fill="#22303a"/>
+  <circle cx="18.8" cy="13.4" r="1.15" fill="#22303a"/>
+  <path d="M14.4 16.4 q1.6 1.2 3.2 0" stroke="#22303a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+
+  <!-- neck shadow ties head to body -->
+  <path d="M13 18.6 q3 1.4 6 0 l0 1 q-3 1.2 -6 0 z" fill="#000" opacity="0.18"/>
+</svg>
