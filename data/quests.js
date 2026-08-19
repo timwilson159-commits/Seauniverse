@@ -44,7 +44,7 @@ SU.data.quests = {
     summary: 'Milo builds enrichment toys off the books and needs three pieces of sea glass.',
     steps: [
       { id: 's1', text: 'Find 3 pieces of sea glass around the cove',
-        where: 'Coastal Cove · the rock pools and the drain grate',
+        where: 'Coastal Cove · the rock pools, the drain grate, or any bin in the park',
         done: { hasItems: { sea_glass: 3 } } },
       { id: 's2', text: 'Bring them back to Milo', at: 'milo', done: null }   // closed by dialogue
     ],

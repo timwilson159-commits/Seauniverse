@@ -259,7 +259,7 @@ SU.data.npcs = {
         lines: [
           'MILO: Oh good, a person who has to talk to me because we work together.',
           'MILO: Listen. I make enrichment toys on my own time. Management calls it "unapproved apparatus".',
-          'MILO: I need sea glass. Three pieces. Rock pools, drains, planters: anywhere water pools and people are careless.',
+          'MILO: I need sea glass. Three pieces. Rock pools, drains, bins: anywhere water pools and people are careless.',
           'MILO: Bring them back and I\'ll make you something useful.'
         ],
         onEnd: [{ type: 'startQuest', id: 'q_cove_seaglass' }]

@@ -97,27 +97,45 @@ SU.Quests = (function () {
   }
 
   /* Resolves an `at` id, whether it names an object or a person, and
-     returns THE ZONE ONLY.
+     returns the ZONE PLUS THE LANDMARK where one is known
+     ("Arctic Cove · Walrus Haul-Out").
 
-     It used to append the landmark as well ("Arctic Cove · Walrus
-     Haul-Out"), which told the player exactly where to stand and left
-     nothing to find. Cut back to the zone on 2026-08-06 at the user's
-     request: the zone is the part you cannot reasonably guess, and
-     finding the right spot within it is the game. The building name
-     plaques added the same day mean a player who wants certainty can
-     read it off the wall in-world instead.
+     This was cut back to the zone alone on 2026-08-06 ("finding the
+     spot within it is the game"), then PUT BACK on the user's
+     instruction after classroom testing: students found navigation far
+     too difficult with only the zone to go on, badly enough that it
+     was worth losing the small discovery element the shorter form was
+     protecting. Do not re-shorten this without being asked again.
+
+     An OBJECT's landmark is its own `name` field (already Title Case,
+     e.g. "Beluga Pool"). An NPC's landmark is whichever of these it
+     carries: `at` (an object id, resolved the same way) first, then
+     `place` (free text, e.g. "the south promenade") as a fallback.
+     Neither is mandatory, so a landmark-less object or person still
+     resolves to the zone alone rather than a blank or broken string.
 
      Still resolved from ids rather than hand-written strings, so moving
      an object or a character cannot leave a stale direction behind, and
      it still returns null for an unresolvable id: `js/validate.js:625`
      relies on that to catch a typo in a quest step's `at`. */
+  function withLandmark(zid, landmark) {
+    return landmark ? zoneName(zid) + ' · ' + landmark : zoneName(zid);
+  }
+
   function place(atId) {
     if (!atId) return null;
     const hit = findObject(atId);
-    if (hit) return zoneName(hit.zone);
+    if (hit) return withLandmark(hit.zone, hit.obj.name);
 
     const npc = SU.data.npcs[atId];
-    if (npc) return zoneName(npc.zone);
+    if (npc) {
+      if (npc.at) {
+        const npcHit = findObject(npc.at);
+        if (npcHit) return withLandmark(npcHit.zone, npcHit.obj.name);
+      }
+      if (npc.place) return withLandmark(npc.zone, npc.place);
+      return zoneName(npc.zone);
+    }
     return null;
   }
 

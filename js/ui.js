@@ -425,14 +425,16 @@ SU.UI = (function () {
         roster.forEach(r => {
           h += '<div class="card duty' + (r.done ? ' done' : '') + '">';
           h += '<div><strong>' + (r.done ? '✓ ' : '') + r.def.title + '</strong>';
-          /* Zone and cost only. The landmark used to be named here too,
-             which made the roster a list of directions rather than a list
-             of jobs; same reasoning as `place()` in js/quests.js, and it
-             now matches the on-map chores panel, which has always shown
-             the zone alone. The energy figure stays: it is a price, not a
-             direction, and it is what the player budgets against. */
-          const az = r.def.atZone || r.def.zone;
-          h += '<p class="muted">' + SU.data.zones[az].name + ' · ' +
+          /* Zone, landmark and cost. This used to be zone-only, matching
+             the on-map chores panel, on the reasoning that naming the
+             landmark turned the roster into a list of directions rather
+             than a list of jobs. PUT BACK on the user's instruction after
+             classroom testing found students lost without it - same
+             reversal as `place()` in js/quests.js, and reusing it here
+             rather than duplicating the zone/landmark lookup. The energy
+             figure stays: it is a price, not a direction. */
+          const place = SU.Quests.place(r.def.at) || SU.data.zones[r.def.atZone || r.def.zone].name;
+          h += '<p class="muted">' + esc(place) + ' · ' +
                r.def.energy + ' energy</p></div>';
           if (!r.done) h += '<span class="tag">To do</span>';
           h += '</div>';

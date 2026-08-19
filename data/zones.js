@@ -272,6 +272,29 @@ SU.data.zones = {
         text: 'Someone has been dropping things in the mulch.',
         loot: [{ item: 'sea_glass', chance: 0.6 }, { item: 'souvenir_pin', chance: 0.3 }] },
 
+      /* FOUR MORE, added so q_cove_seaglass's three pieces are findable in
+         one shift instead of needing several days. With only the three
+         rockpools above (0.7/0.4/0.6), the chance of all three landing
+         the SAME day was under 17%, which is what sent students hunting
+         across multiple days without understanding why. More independent
+         restocking spots raises the odds without making it a certainty,
+         the same probabilistic shape every other search object uses. */
+      { id: 'bin_cove_1', x: 17, y: 10, kind: 'search', name: 'Public Bin',
+        text: 'A visitor bin, overflowing as usual.',
+        loot: [{ item: 'sea_glass', chance: 0.6 }] },
+
+      { id: 'bin_cove_2', x: 23, y: 16, kind: 'search', name: 'Recycling Bin',
+        text: 'Bottles and wrappers, and whatever fell in with them.',
+        loot: [{ item: 'sea_glass', chance: 0.6 }] },
+
+      { id: 'bin_cove_3', x: 25, y: 23, kind: 'search', name: 'Kiosk Bin',
+        text: 'Overflowing again. The kiosk queue does not believe in bins.',
+        loot: [{ item: 'sea_glass', chance: 0.6 }] },
+
+      { id: 'bin_cove_4', x: 13, y: 16, kind: 'search', name: 'Bench Bin',
+        text: 'Somebody has used it as an ashtray, which is not what it is for.',
+        loot: [{ item: 'sea_glass', chance: 0.6 }] },
+
       { id: 'hose_point', x: 23, y: 12, kind: 'station', name: 'Hose Reel',
         text: 'A coiled deck hose on a wall reel, with a scrubbing brush wedged behind it.' },
 
