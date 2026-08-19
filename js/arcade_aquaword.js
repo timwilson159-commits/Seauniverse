@@ -5,10 +5,35 @@
    word in six tries, then pick what it actually means. Get both and
    the cabinet pays out.
 
-   NO FAIL STATE, same as everything else in this game. Running out of
-   guesses reveals the word AND its definition, because the lesson
-   always shows; it simply does not pay. The machine stays playable
-   afterwards, so a student can come back and learn the word properly.
+   REBUILT 2026-08-11 TO LOOK AND FEEL LIKE AN ACTUAL WORDLE. The
+   original version used a plain text `<input>` below the grid: type
+   a full guess, press a Guess button, watch it land as a finished row.
+   Students found that unfamiliar. This version types INTO the grid
+   itself, live, the same way the real game does: the active row fills
+   letter by letter as you type or click, remaining rows stay blank,
+   and there is a clickable on-screen QWERTY keyboard underneath that
+   colours itself as letters are ruled in or out. Both physical typing
+   and clicking the on-screen keys work, at the same time, for the
+   same guess.
+
+   NO TEXT INPUT MEANS NO ESCAPE TRAP. The previous version needed
+   special handling because a browser text input steals every keydown
+   from the page while it has focus, which is why Escape used to have
+   to be caught INSIDE the panel. There is no input element anymore,
+   so physical keys are read the normal way every other click-driven
+   panel in this project already uses: js/main.js's one global keydown
+   handler calls `SU.Aquaword.keyPress(e)` early, before the
+   KeyM/KeyE/KeyP hotkey branches, same reasoning and same place as
+   RESCUE!'s equivalent hook.
+
+   SHARES ITS KEYBOARD CSS WITH RESCUE! (.kb-row / .kb-key in
+   style.css), which was renamed from Rescue-only names to generic
+   ones for exactly this reuse, rather than duplicating a QWERTY
+   layout a second time.
+
+   NO FAIL STATE, same rule as always. Running out of guesses reveals
+   the word AND its definition, because the lesson always shows; it
+   simply does not pay. The machine stays playable afterwards.
 
    WHY THE MATCHING ROUND EXISTS: solving a word puzzle proves you can
    spell, not that you know what a fluke is. The second round is the
@@ -18,19 +43,21 @@
    data/arcade_aquaword.js and it becomes both a puzzle and a
    distractor, with no extra authoring.
 
-   VARIABLE WORD LENGTH is deliberate. Fixed at five letters the list
-   would have been padded with weak words; the grid is built from the
-   answer's own length and the length is stated up front.
+   ONLY 4 AND 5 LETTER WORDS NOW (see the data file for why): the grid
+   and keyboard no longer need to cope with anything longer, so the
+   variable-width grid logic stays but the practical range is narrow.
    ============================================================ */
 window.SU = window.SU || {};
 
 SU.Aquaword = (function () {
   const MAX_GUESSES = 6;
+  const KB_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
   let el, machine = null;
   let entry = null;          // the chosen { word, def }
   let answer = '';
   let guesses = [];          // strings already submitted
+  let currentGuess = '';     // the row being typed right now
   let phase = 'guess';       // 'guess' | 'define' | 'over'
   let options = [];          // definition choices for the second round
   let solved = false;
@@ -49,6 +76,7 @@ SU.Aquaword = (function () {
     entry   = pool[Math.floor(Math.random() * pool.length)];
     answer  = entry.word.toUpperCase();
     guesses = [];
+    currentGuess = '';
     phase   = 'guess';
     solved  = false;
     message = '';
@@ -66,7 +94,6 @@ SU.Aquaword = (function () {
   }
 
   function close() {
-    SU.Audio && SU.Audio.clearOverride();
     el.classList.add('hidden');
     machine = null;
     /* Guarded: `state:changed` runs the quest evaluator, which reads
@@ -98,8 +125,8 @@ SU.Aquaword = (function () {
     return res;
   }
 
-  /* Best-known state of every letter guessed so far, for the strip
-     under the grid. correct beats present beats absent. */
+  /* Best-known state of every letter guessed so far, for colouring the
+     on-screen keyboard. correct beats present beats absent. */
   function letterStates() {
     const rank = { absent: 0, present: 1, correct: 2 };
     const best = {};
@@ -113,17 +140,31 @@ SU.Aquaword = (function () {
     return best;
   }
 
-  function submit(raw) {
-    const guess = String(raw || '').trim().toUpperCase();
+  /* ---------- typing into the active row ---------- */
+  function typeLetter(ch) {
+    if (phase !== 'guess' || currentGuess.length >= answer.length) return;
+    currentGuess += ch;
+    message = '';
+    render();
+  }
 
-    if (!/^[A-Z]+$/.test(guess))        { message = 'Letters only.'; return render(); }
-    if (guess.length !== answer.length) { message = 'It is ' + answer.length + ' letters.'; return render(); }
+  function backspace() {
+    if (phase !== 'guess' || !currentGuess.length) return;
+    currentGuess = currentGuess.slice(0, -1);
+    render();
+  }
+
+  function submitGuess() {
+    if (phase !== 'guess') return;
+    if (currentGuess.length !== answer.length) { message = 'Not enough letters.'; return render(); }
 
     /* Deliberately NOT checked against a dictionary. A word list big
        enough to judge real English is a lot of weight for a cabinet in
        a staff room, and rejecting a student's honest attempt teaches
        nothing. Any letter string of the right length is allowed. */
+    const guess = currentGuess;
     guesses.push(guess);
+    currentGuess = '';
     message = '';
 
     if (guess === answer) {
@@ -137,6 +178,18 @@ SU.Aquaword = (function () {
       SU.Audio && SU.Audio.play('keypad_press');
     }
     render();
+  }
+
+  /* Routed here from js/main.js's global keydown handler. Only reads
+     keys while a guess is actually being typed, so it is inert (and
+     safely ignorable) during the definition round or the end screen,
+     which are click-only by design. */
+  function keyPress(e) {
+    if (phase !== 'guess') return;
+    const m = /^Key([A-Z])$/.exec(e.code);
+    if (m) { e.preventDefault(); typeLetter(m[1]); return; }
+    if (e.code === 'Backspace') { e.preventDefault(); backspace(); return; }
+    if (e.code === 'Enter') { e.preventDefault(); submitGuess(); return; }
   }
 
   function chooseDef(i) {
@@ -159,21 +212,34 @@ SU.Aquaword = (function () {
     for (let r = 0; r < MAX_GUESSES; r++) {
       const g = guesses[r];
       const s = g ? score(g) : null;
+      const isActive = !g && r === guesses.length;
       h += '<div class="aqua-row">';
       for (let c = 0; c < answer.length; c++) {
-        const cls = s ? ' ' + s[c] : '';
-        h += '<span class="aqua-cell' + cls + '">' + (g ? esc(g[c]) : '') + '</span>';
+        let cls = '', ch = '';
+        if (g) { cls = s[c]; ch = g[c]; }
+        else if (isActive && c < currentGuess.length) { cls = 'filled'; ch = currentGuess[c]; }
+        h += '<span class="aqua-cell' + (cls ? ' ' + cls : '') + '">' + (ch ? esc(ch) : '') + '</span>';
       }
       h += '</div>';
     }
     return h + '</div>';
   }
 
-  function stripHTML() {
+  function keyboardHTML() {
+    /* Wrapped in its own container for the same reason RESCUE!'s
+       keyboard is: the `.kb-row:nth-child` stagger in style.css needs
+       these three rows counted against each other, not against
+       whatever else `panel-body` contains. */
     const st = letterStates();
-    let h = '<div class="aqua-strip">';
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ch => {
-      h += '<span class="aqua-key ' + (st[ch] || '') + '">' + ch + '</span>';
+    let h = '<div class="kb">';
+    KB_ROWS.forEach((row, i) => {
+      h += '<div class="aqua-strip kb-row">';
+      if (i === 2) h += '<button class="aqua-key kb-key kb-wide" data-back="1">⌫</button>';
+      row.split('').forEach(ch => {
+        h += '<button class="aqua-key kb-key ' + (st[ch] || '') + '" data-letter="' + ch + '">' + ch + '</button>';
+      });
+      if (i === 2) h += '<button class="aqua-key kb-key kb-wide" data-enter="1">Enter</button>';
+      h += '</div>';
     });
     return h + '</div>';
   }
@@ -187,13 +253,8 @@ SU.Aquaword = (function () {
       h += '<p class="muted">A marine word, ' + answer.length + ' letters. ' +
            (MAX_GUESSES - guesses.length) + ' of ' + MAX_GUESSES + ' guesses left.</p>';
       h += gridHTML();
-      h += stripHTML();
       if (message) h += '<p class="aqua-msg">' + esc(message) + '</p>';
-      h += '<div class="aqua-entry">' +
-             '<input id="aquaInput" maxlength="' + answer.length + '" autocomplete="off" ' +
-                    'spellcheck="false" aria-label="Your guess">' +
-             '<button data-go="1">Guess</button>' +
-           '</div>';
+      h += keyboardHTML();
     }
 
     if (phase === 'define') {
@@ -228,33 +289,19 @@ SU.Aquaword = (function () {
 
   function wire() {
     el.querySelectorAll('[data-close]').forEach(b => b.onclick = close);
-    const go = el.querySelector('[data-go]');
-    const inp = el.querySelector('#aquaInput');
-    if (go && inp) {
-      go.onclick = () => submit(inp.value);
-      /* Enter submits. The global key handler already bails out when an
-         input has focus (the `typing()` guard in js/main.js), so W, A, S
-         and D reach the box instead of walking the player around. */
-      inp.onkeydown = e => {
-        if (e.key === 'Enter') { e.preventDefault(); submit(inp.value); return; }
-        /* Escape has to be handled HERE, not left to js/main.js. That
-           handler returns early whenever a text input has focus (the
-           guard that stops a name like "Wade" walking the player around),
-           so while this box has the cursor the global Esc branch never
-           runs and the panel could only be closed with the mouse. */
-        if (e.key === 'Escape') { e.preventDefault(); close(); }
-      };
-      inp.focus();
-    }
+    el.querySelectorAll('[data-letter]').forEach(b => b.onclick = () => typeLetter(b.dataset.letter));
+    const back = el.querySelector('[data-back]');
+    if (back) back.onclick = backspace;
+    const ent = el.querySelector('[data-enter]');
+    if (ent) ent.onclick = submitGuess;
     el.querySelectorAll('[data-def]').forEach(b =>
       b.onclick = () => chooseDef(parseInt(b.dataset.def, 10)));
   }
 
   return {
-    init, start, close,
+    init, start, close, keyPress,
     get isOpen() { return el && !el.classList.contains('hidden'); }
   };
 })();
 
-/* Registered by id, so the three AQUAWORD cabinets light up at once. */
 SU.Arcade.register('aquaword', SU.Aquaword.start);

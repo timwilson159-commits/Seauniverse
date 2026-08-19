@@ -710,6 +710,10 @@ kbd {
 .aqua-cell.correct { background: #2f6b45; border-color: #3f8b5b; color: #fff; }
 .aqua-cell.present { background: #7a6320; border-color: #9c8130; color: #fff; }
 .aqua-cell.absent  { background: #141c24; border-color: #223040; color: var(--muted); }
+/* The active row, being typed right now: a letter has landed but has
+   not been scored yet, so it gets neither a colour nor the empty
+   row's flat look, just a border that says "something is here". */
+.aqua-cell.filled  { border-color: var(--accent); }
 
 .aqua-strip { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin-bottom: 10px; }
 .aqua-key {
@@ -721,13 +725,11 @@ kbd {
 .aqua-key.present { background: #7a6320; color: #fff; border-color: #9c8130; }
 .aqua-key.absent  { background: #101820; color: #4d5c6b; }
 
+/* No more text input in either game that uses this (both type into
+   the grid now), so it is just a flex row for the end-screen Done
+   button. Kept the name rather than renaming it out from under the
+   markup that still references it. */
 .aqua-entry { display: flex; gap: 8px; margin-top: 4px; }
-.aqua-entry input {
-  flex: 1; min-width: 0; padding: 9px 11px; letter-spacing: .12em; text-transform: uppercase;
-  font: 600 16px/1 system-ui, sans-serif;
-  background: #0c1219; color: var(--ink); border: 1px solid var(--line); border-radius: 7px;
-}
-.aqua-entry input:focus { outline: none; border-color: var(--accent); }
 .aqua-msg  { color: var(--warn); font-size: 13px; margin: 0 0 8px; }
 .aqua-word { margin: 6px 0 2px; letter-spacing: .12em; font-size: 22px; }
 .aqua-def  { color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
@@ -898,21 +900,32 @@ kbd {
   .sort-opts { grid-template-columns: 1fr; }
 }
 
-/* ---------- arcade: RESCUE! ----------
-   Reuses AQUAWORD's .aqua-box / .aqua-key / .aqua-word / .aqua-def /
-   .aqua-opts wholesale; only the QWERTY row stagger and the miss
-   lights are new. */
-
-/* .aqua-key is sized for a passive letter-state STRIP in AQUAWORD; here
-   the keys are the primary click target (as well as answering to a
-   physical keyboard), so they get a bit more room to tap. */
-.rescue-key { width: 30px; height: 34px; font-size: 13px; }
-.rescue-row + .rescue-row { margin-top: 2px; }
+/* ---------- shared: clickable QWERTY keyboard ----------
+   Used by RESCUE! and (since 2026-08-11) AQUAWORD, which is why these
+   are generic .kb-* names rather than game-prefixed: the same three
+   staggered rows, the same tap-sized keys, answering to both a click
+   and a physical keydown. Was `.rescue-key`/`.rescue-row` until
+   AQUAWORD needed the identical thing; renamed once rather than
+   duplicated a second time. */
+.kb-key { width: 30px; height: 34px; font-size: 13px; }
+.kb-wide { width: auto; padding: 0 10px; font-size: 11px; }
+.kb-row + .kb-row { margin-top: 2px; }
 /* Each row nudges right, same stagger a real keyboard has, purely so
    it reads as a keyboard at a glance rather than a grid of letters. */
-.rescue-row:nth-child(2) { margin-left: 15px; }
-.rescue-row:nth-child(3) { margin-left: 30px; }
+.kb-row:nth-child(2) { margin-left: 15px; }
+.kb-row:nth-child(3) { margin-left: 30px; }
 
+@media (max-width: 460px) {
+  .kb-key { width: 24px; height: 30px; font-size: 11px; }
+  .kb-wide { font-size: 9.5px; padding: 0 6px; }
+  .kb-row:nth-child(2) { margin-left: 10px; }
+  .kb-row:nth-child(3) { margin-left: 20px; }
+}
+
+/* ---------- arcade: RESCUE! ----------
+   Reuses AQUAWORD's .aqua-box / .aqua-key / .aqua-word / .aqua-def /
+   .aqua-opts wholesale, plus the shared .kb-* keyboard above; only the
+   miss lights are unique to this game. */
 .rescue-misses { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
 .rescue-miss {
   width: 14px; height: 14px; border-radius: 50%;
@@ -924,10 +937,4 @@ kbd {
 .rescue-miss.lit {
   background: var(--bad); border-color: var(--bad);
   box-shadow: 0 0 6px 1px var(--bad);
-}
-
-@media (max-width: 460px) {
-  .rescue-key { width: 24px; height: 30px; font-size: 11px; }
-  .rescue-row:nth-child(2) { margin-left: 10px; }
-  .rescue-row:nth-child(3) { margin-left: 20px; }
 }

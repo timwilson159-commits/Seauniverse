@@ -85,11 +85,15 @@ SU.Input = (function () {
     /* The keypad swallows everything while it is up, so typing a code
        cannot also fire the dev hotkeys or open the journal. */
     if (SU.UI.keypadOpen) { SU.UI.keypadKey(e); return; }
-    /* RESCUE! reads physical letter keys the same way, and for the same
-       reason: M, E and P are all guessable letters, and the hotkey
-       branches below would otherwise fire on them first (toggle the
-       menu, try to interact, toggle pause) instead of guessing. */
+    /* RESCUE! and AQUAWORD both read physical letter keys the same way,
+       and for the same reason: M, E and P are guessable/typeable
+       letters, and the hotkey branches below would otherwise fire on
+       them first (toggle the menu, try to interact, toggle pause)
+       instead of reaching the game. AQUAWORD also wants Enter and
+       Backspace, which is why it has to come before the Space/Enter
+       dialogue-advance check right below. */
     if (SU.Rescue.isOpen) { SU.Rescue.keyPress(e); return; }
+    if (SU.Aquaword.isOpen) { SU.Aquaword.keyPress(e); return; }
     if (e.code === 'Space' || e.code === 'Enter') {
       if (SU.Dialogue.isOpen) { SU.Dialogue.advance(); e.preventDefault(); return; }
     }

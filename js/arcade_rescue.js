@@ -153,18 +153,24 @@ SU.Rescue = (function () {
   const KEYBOARD_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
   function keyboardHTML() {
-    let h = '';
+    /* The three rows are wrapped in their own container so the
+       `.kb-row:nth-child(2/3)` stagger in style.css counts THESE three
+       against each other, not against whatever else render() happens
+       to put in `panel-body` before them. Without this wrapper the
+       rows are just three of panel-body's many children and the
+       nth-child selector picks the wrong ones (or none). */
+    let h = '<div class="kb">';
     KEYBOARD_ROWS.forEach(row => {
-      h += '<div class="aqua-strip rescue-row">';
+      h += '<div class="aqua-strip kb-row">';
       row.split('').forEach(ch => {
         const isGuessed = guessed.indexOf(ch) !== -1;
         const st = !isGuessed ? '' : (answer.indexOf(ch) !== -1 ? 'correct' : 'absent');
-        h += '<button class="aqua-key rescue-key ' + st + '" data-letter="' + ch + '"' +
+        h += '<button class="aqua-key kb-key ' + st + '" data-letter="' + ch + '"' +
              (isGuessed ? ' disabled' : '') + '>' + ch + '</button>';
       });
       h += '</div>';
     });
-    return h;
+    return h + '</div>';
   }
 
   /* Red lights for misses spent, dark unlit ones for misses still in
