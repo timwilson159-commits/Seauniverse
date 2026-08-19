@@ -213,7 +213,18 @@ SU.World = (function () {
 
     if (hit.condition && !SU.Rules.check(hit.condition)) {
       SU.Audio && SU.Audio.play('blocked');
-      SU.Dialogue.open({ lines: [hit.lockedText || 'This way is closed.'] }, 'Locked');
+      /* Two pages, same shape as the watched-gate suspicion message:
+         the first is in-world flavour (why it LOOKS shut), the second
+         is a plain out-of-character line on what actually opens it.
+         Added after students got stuck not knowing what they still
+         needed - see SU.Rules.explain() for where the wording comes
+         from. Skipped entirely if explain() has nothing to say, so an
+         unhandled condition type still shows the old single page
+         rather than a blank second one. */
+      const lines = [hit.lockedText || 'This way is closed.'];
+      const need = SU.Rules.explain(hit.condition);
+      if (need) lines.push(need);
+      SU.Dialogue.open({ lines: lines }, 'Locked');
       bounceOff(hit);
       return;
     }

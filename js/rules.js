@@ -214,5 +214,120 @@ SU.Rules = (function () {
     SU.bus.emit('state:changed');
   }
 
-  return { check, apply, effectTypes: Object.keys(handlers) };
+  /* ---------- explaining a FAILED condition, in plain English ----------
+     Built for locked doors: `checkExits()` in js/world.js already shows
+     the in-world `lockedText` (why the door LOOKS shut), and students
+     were getting stuck not knowing what actually opens it. This is the
+     second page: what to do about it, same two-message shape as the
+     watched-gate suspicion block (one page atmosphere, one page action).
+
+     Only covers the condition keys actually used to gate a door today:
+     flags, hasItems, qualification, quest, phase, any. An unhandled key
+     is silently skipped rather than guessed at - extend FLAG_HINTS or
+     this function if a new kind of gate is ever added.
+
+     FLAGS carry no human text anywhere else in the game (unlike items,
+     quests and qualifications, which all have a `name`/`title` already),
+     so this table exists purely to translate the ones that currently
+     gate a door. Traced by hand from the effect that sets each one:
+       meeting_set          -> npcs_deep.js, Wren, after `deep_done`
+       zone_coral_unlocked  -> npcs.js, Wren, on ev_transfer_manifest
+       zone_arctic_unlocked -> zones.js, the dead_drop search object
+       turtle_access        -> npcs.js, Priya, after q_reef_induction
+       deep_gate_open       -> zone_deep.js, deep_northgate station
+       meridian_open        -> the meridian_pad keypad itself
+       hatch_clear          -> npcs_ocean.js, Vaughn, all 3 documents
+       hide_open            -> zone_deep.js, the deep_hatch letter lock
+       arctic_case_made,
+       zone_ocean_unlocked  -> BOTH set together, quests_arctic.js,
+                                q_arctic_ledger's reward */
+  const FLAG_HINTS = {
+    meeting_set:          'Finish everything in The Deep, then talk to Wren again.',
+    zone_coral_unlocked:  'Find the transfer manifest, then bring it to Wren.',
+    zone_arctic_unlocked: 'Copy the breeding studbook, then leave a copy at the dead drop Wren told you about.',
+    turtle_access:        'Complete Priya’s induction quest, then talk to her about it.',
+    deep_gate_open:       'This gate only opens from the far side. Find the service tunnel down to The Deep and unbolt it from there.',
+    meridian_open:        'Solve the keypad code right here at the gate.',
+    hatch_clear:          'Bring Vaughn all three pieces of paperwork: the relief roster, the closed work order, and the countermand.',
+    hide_open:            'Solve the letter lock: read the numbered graffiti tags around the site in order and take the letter signed after each one.',
+    /* Same wording for both on purpose: they are set by the same event
+       (q_arctic_ledger's reward), so explain() dedupes them into one
+       line rather than repeating the same instruction twice. */
+    arctic_case_made:     'Complete Wren’s investigation in Arctic Cove: the ledger, Frost’s objection and the chiller log.',
+    zone_ocean_unlocked:  'Complete Wren’s investigation in Arctic Cove: the ledger, Frost’s objection and the chiller log.'
+  };
+
+  const PHASE_HINTS = {
+    gap: 'Only available off shift, not during a public shift.'
+  };
+
+  function explainOne(cond) {
+    const S = SU.State, d = S.data;
+    const out = [];
+
+    if (cond.any) {
+      if (!cond.any.some(c => check(c))) {
+        const parts = [];
+        /* De-duplicated: `zone_ocean_unlocked` and `arctic_case_made` are
+           set by the same event (see FLAG_HINTS), so an `any` of both
+           would otherwise repeat the same instruction twice. */
+        cond.any.forEach(c => explainOne(c).forEach(p => { if (parts.indexOf(p) === -1) parts.push(p); }));
+        if (parts.length === 1) out.push(parts[0]);
+        else if (parts.length > 1) out.push('Either of these: ' + parts.join(' — or — '));
+      }
+    }
+    if (cond.flags) {
+      for (const k in cond.flags) {
+        if (S.flag(k) !== cond.flags[k]) {
+          out.push(FLAG_HINTS[k] || ('Still needed: ' + k.replace(/_/g, ' ') + '.'));
+        }
+      }
+    }
+    if (cond.hasItems) {
+      for (const k in cond.hasItems) {
+        const need = cond.hasItems[k];
+        if (S.count(k) < need) {
+          const item = SU.data.items[k];
+          out.push('You need ' + (need > 1 ? need + ' x ' : '') + (item ? item.name : k) + '.');
+        }
+      }
+    }
+    if (cond.qualification) {
+      asArray(cond.qualification).forEach(q => {
+        if (!S.hasQual(q)) {
+          const qd = SU.data.qualifications[q];
+          out.push('Earn the qualification: ' + (qd ? qd.name : q) + '.');
+        }
+      });
+    }
+    if (cond.quest) {
+      for (const qid in cond.quest) {
+        const want = cond.quest[qid];
+        const rec = d.quests[qid];
+        const status = rec ? rec.status : 'not_started';
+        if (status !== want) {
+          const qd = SU.data.quests[qid];
+          const title = qd ? qd.title : qid;
+          out.push((want === 'completed' ? 'Complete the quest: ' : 'Start the quest: ') + title + '.');
+        }
+      }
+    }
+    if (cond.phase) {
+      const p = S.phase();
+      if (cond.phase !== p.id && cond.phase !== p.kind) {
+        out.push(PHASE_HINTS[cond.phase] || ('Only available during: ' + cond.phase + '.'));
+      }
+    }
+    return out;
+  }
+
+  /* Returns '' when there is nothing to say (condition already passes,
+     or uses a key this function does not cover), never null/undefined,
+     so a caller can always safely check truthiness. */
+  function explain(cond) {
+    if (!cond || check(cond)) return '';
+    return explainOne(cond).join(' ');
+  }
+
+  return { check, explain, apply, effectTypes: Object.keys(handlers) };
 })();
